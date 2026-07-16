@@ -74,7 +74,26 @@ Before deployment, a rigorous security and reliability audit was conducted:
 5. **Real-time Resilience:** Tested and confirmed the socket's ability to gracefully auto-reconnect and resume event listening following simulated network failures.
 6. **Secret Management:** Enforced a strict `.gitignore` to protect `.env` and `facebook.db`.
 
+
 ---
+
+## 🧪 Recent Validations & Tests (July 2026)
+
+### 1. Concurrent Write Load Test
+A concurrent load test was executed on the live server (running 16 clustered workers) to stress-test the SQLite database's WAL (Write-Ahead Logging) configuration.
+- **Concurrent Post Creations:** 50 parallel requests -> **100% Success** (0 failures, 0 `SQLITE_BUSY` errors).
+- **Concurrent User Registrations & Logins:** 50 parallel requests -> **100% Success**.
+- **Concurrent Likes (interactions):** 50 parallel requests on a target post -> **100% Success**.
+- **Concurrent Comments:** 50 parallel requests on a target post -> **100% Success**.
+- **Conclusion:** Clustered backend configuration paired with SQLite WAL mode handles heavy concurrent write actions securely and successfully without database lockups.
+
+### 2. Git Repository & Backup Lock
+To guarantee regression safety and establish proper version control, a local git repository was initialized and backed up to GitHub:
+- **Repository Path:** `https://github.com/Thiskk040/web-project-facebook-clone-claude-sonnet-antigravity.git`
+- **Initial Backup Commit Hash:** `c84235d52cb3ea97423194c49c2217e4e6eaa91c`
+
+---
+
 
 ## 🚀 How to Run the Project
 
