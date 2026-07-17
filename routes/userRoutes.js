@@ -86,6 +86,7 @@ router.get('/:username/posts', authenticateToken, (req, res) => {
         WHERE u.username = ?
         ORDER BY p.created_at DESC
     `, [req.user.id, req.params.username], (err, rows) => {
+        if (err) throw err;
         res.json(rows || []);
     });
 });
@@ -103,6 +104,7 @@ router.get('/:username/tagged_posts', authenticateToken, (req, res) => {
         WHERE tu.username = ?
         ORDER BY p.created_at DESC
     `, [req.user.id, req.params.username], (err, rows) => {
+        if (err) throw err;
         res.json(rows || []);
     });
 });

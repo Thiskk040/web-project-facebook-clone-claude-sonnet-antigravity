@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../config/database');
 const upload = require('../config/upload');
 const { authenticateToken } = require('../middleware/auth');
+const { detectBait } = require('../utils/baitDetector');
 
 const router = express.Router();
 
@@ -21,11 +22,11 @@ router.get('/', authenticateToken, (req, res) => {
         ORDER BY p.created_at DESC
     `, [req.user.id, req.user.id, req.user.id, req.user.id], (err, rows) => {
         if (err) throw err;
-        res.json(rows);
+        res.json(rows || []);
     });
 });
 
-router.post('/', authenticateToken, upload.single('image'), (req, res) => {
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -33,38 +34,58 @@ router.post('/', authenticateToken, upload.single('image'), (req, res) => {
 
     if (!content && !imageUrl) return res.status(400).json({ error: "Content or image is required" });
 
-    db.run("INSERT INTO posts (user_id, content, image_url) VALUES (?, ?, ?)", [userId, content, imageUrl], function(err) {
-        if (err) throw err;
-        const postId = this.lastID;
-        
-        io.emit('new_post', {
-            id: postId,
-            user_id: userId,
-            username: req.user.username,
-            content,
-            image_url: imageUrl,
-            created_at: new Date().toISOString()
-        });
+    try {
+        const bait = await detectBait(content);
+        const baitScore = bait.score;
+        const baitTranslation = bait.translations.join(', ');
+        const baitRoasts = bait.roasts.join(' | ');
 
-        db.run(`INSERT INTO notifications (user_id, actor_id, type, target_id) SELECT id, ?, 'new_post', ? FROM users WHERE id != ?`, [userId, postId, userId]);
+        db.run(
+            "INSERT INTO posts (user_id, content, image_url, bait_score, bait_translation, bait_roasts) VALUES (?, ?, ?, ?, ?, ?)",
+            [userId, content, imageUrl, baitScore, baitTranslation, baitRoasts],
+            function(err) {
+                if (err) {
+                    console.error("DB Insert Error:", err.message);
+                    return res.status(500).json({ error: "Database error" });
+                }
+                const postId = this.lastID;
 
-        const mentions = content.match(/@(\w+)/g);
-        if (mentions) {
-            const usernames = [...new Set(mentions.map(m => m.substring(1)))];
-            const placeholders = usernames.map(() => '?').join(',');
-            db.all(`SELECT id, username FROM users WHERE username IN (${placeholders})`, usernames, (err, taggedUsers) => {
-                if (taggedUsers) {
-                    taggedUsers.forEach(tu => {
-                        db.run("INSERT INTO tags (post_id, tagged_user_id) VALUES (?, ?)", [postId, tu.id]);
-                        db.run("INSERT INTO notifications (user_id, actor_id, type, target_id) VALUES (?, ?, 'tag', ?)", [tu.id, userId, postId]);
-                        io.to(`user_${tu.id}`).emit(`notification_${tu.id}`, { msg: `${req.user.username} tagged you in a post.`, type: 'tag' });
+                io.emit('new_post', {
+                    id: postId,
+                    user_id: userId,
+                    username: req.user.username,
+                    content,
+                    image_url: imageUrl,
+                    created_at: new Date().toISOString(),
+                    bait_score: baitScore,
+                    bait_translation: baitTranslation,
+                    bait_roasts: baitRoasts
+                });
+
+                db.run(`INSERT INTO notifications (user_id, actor_id, type, target_id) SELECT id, ?, 'new_post', ? FROM users WHERE id != ?`, [userId, postId, userId]);
+
+                const mentions = content ? content.match(/@(\w+)/g) : null;
+                if (mentions) {
+                    const usernames = [...new Set(mentions.map(m => m.substring(1)))];
+                    const placeholders = usernames.map(() => '?').join(',');
+                    db.all(`SELECT id, username FROM users WHERE username IN (${placeholders})`, usernames, (err, taggedUsers) => {
+                        if (taggedUsers) {
+                            taggedUsers.forEach(tu => {
+                                db.run("INSERT INTO tags (post_id, tagged_user_id) VALUES (?, ?)", [postId, tu.id]);
+                                db.run("INSERT INTO notifications (user_id, actor_id, type, target_id) VALUES (?, ?, 'tag', ?)", [tu.id, userId, postId]);
+                                io.to(`user_${tu.id}`).emit(`notification_${tu.id}`, { msg: `${req.user.username} tagged you in a post.`, type: 'tag' });
+                            });
+                        }
                     });
                 }
-            });
-        }
 
-        res.status(201).json({ message: "Post created", postId });
-    });
+                res.status(201).json({ message: "Post created", postId });
+            }
+        );
+    } catch (baitErr) {
+        console.error("Bait detection error:", baitErr.message);
+        res.status(500).json({ error: "Bait detection failed" });
+    }
 });
 
 router.get('/:id/comments', authenticateToken, (req, res) => {

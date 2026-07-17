@@ -5,7 +5,7 @@ CRITICAL: Any AI Agent accessing this repository MUST read this README.md file i
 
 # Complete Facebook Clone
 
-**Last Updated (Timestamp):** 2026-07-17T14:29:00+07:00
+**Last Updated (Timestamp):** 2026-07-17T14:50:00+07:00
 
 ## 📖 Project Overview
 This project is a modern, real-time Web Application modeled after Facebook. It was completely overhauled from a legacy static structure into a highly secure, real-time ecosystem utilizing a decoupled architecture (Node.js/Express backend and React/Vite frontend). 
@@ -69,6 +69,11 @@ The project was developed and upgraded systematically across 5 distinct phases, 
 - **Engagement Bait Detector 🎣 (Upgraded to 2,500 Patterns):** Built a database-driven regex analyzer (`utils/baitDetector.js`) utilizing an SQLite table (`bait_patterns`) containing satirical social media patterns from modern culture. **Upgraded the dataset to exactly 2,500 patterns** covering Gen-Z slang, LGBTQ/Katoey expressions, and current beauty trends (e.g. "ปรุงจืด", "ปรุงจัด"). Re-engineered the database initialization inside `config/database.js` to dynamically generate and seed all 2,500 records inside a transaction for zero-startup latency. Computes dynamic bait percentage metrics and appends them to post schemas on-the-fly. Integrates UI badges with hover explanations, client-side settings to hide/show badges, and an interactive click-to-roast savage analysis modal window.
 - **Ghost Read Receipt 👻:** Measures read-to-response elapsed hours when the recipient has viewed a message. If a message is seen but unanswered for $>24$ hours, displays a custom ghost emoji checkmark, a custom timestamp (e.g. `Seen 2 วันที่แล้ว 👻`), and a pulse-animated ghost icon.
 - **Unskippable Fake Ad Card 📢:** Interjects funny sponsored wellness warning cards dynamically every 9 posts in the main feed containing locked skip buttons and distinguishable blue dashed highlights.
+
+### Phase 9: Hybrid Engagement Bait Detector (Regex + Gemini API Fallback)
+- **Hybrid Detection System:** Upgraded `utils/baitDetector.js` to run local SQLite Regex patterns first (~50ms) and fall back to Gemini API (using `gemini-3.5-flash` model) if the score is 0. This enables semantic understanding of complex word modifications (e.g., "โซเหนื่อย", "พสจีน", "โต๋วอิน") that fail traditional regex matching.
+- **Database Caching of Analysis:** Redesigned post retrieval to query pre-calculated bait details stored in the `posts` table columns (`bait_score`, `bait_translation`, `bait_roasts`). Analysis is executed only once when a post is created (`POST /posts`) rather than dynamically on-the-fly, reducing latency and avoiding API rate limits.
+- **Robust JSON Parsing:** Developed custom bracket-matching string extractor `extractFirstJson` supporting quoted strings and escape sequences to handle formatting anomalies in LLM responses safely.
 
 ### Final QA & Security Audit
 Before deployment, a rigorous security and reliability audit was conducted:

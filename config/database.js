@@ -23,6 +23,9 @@ db.serialize(() => {
         user_id INTEGER NOT NULL, 
         content TEXT, 
         image_url TEXT, 
+        bait_score INTEGER DEFAULT 0,
+        bait_translation TEXT DEFAULT '',
+        bait_roasts TEXT DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id)
