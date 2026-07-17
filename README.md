@@ -5,7 +5,7 @@ CRITICAL: Any AI Agent accessing this repository MUST read this README.md file i
 
 # Complete Facebook Clone
 
-**Last Updated (Timestamp):** 2026-07-07T15:06:00+07:00
+**Last Updated (Timestamp):** 2026-07-17T14:29:00+07:00
 
 ## 📖 Project Overview
 This project is a modern, real-time Web Application modeled after Facebook. It was completely overhauled from a legacy static structure into a highly secure, real-time ecosystem utilizing a decoupled architecture (Node.js/Express backend and React/Vite frontend). 
@@ -64,6 +64,11 @@ The project was developed and upgraded systematically across 5 distinct phases, 
 - **Profile Enhancements:** Implemented profile picture uploads natively, seamlessly displaying the avatar across all system components (Feed, Comments, Suggestions, Messages).
 - **Feed & Privacy Polish:** Overhauled feed logic to display posts exclusively from confirmed friends and the user. Added `Unlike` functionality and the ability to delete personal comments.
 - **Friend Management:** Introduced a "Friends" tab on user profiles, along with "Unfriend" and direct "Message" buttons for integrated user interaction.
+
+### Phase 8: Satirical Social Media Features (Joke Features)
+- **Engagement Bait Detector 🎣 (Upgraded to 2,500 Patterns):** Built a database-driven regex analyzer (`utils/baitDetector.js`) utilizing an SQLite table (`bait_patterns`) containing satirical social media patterns from modern culture. **Upgraded the dataset to exactly 2,500 patterns** covering Gen-Z slang, LGBTQ/Katoey expressions, and current beauty trends (e.g. "ปรุงจืด", "ปรุงจัด"). Re-engineered the database initialization inside `config/database.js` to dynamically generate and seed all 2,500 records inside a transaction for zero-startup latency. Computes dynamic bait percentage metrics and appends them to post schemas on-the-fly. Integrates UI badges with hover explanations, client-side settings to hide/show badges, and an interactive click-to-roast savage analysis modal window.
+- **Ghost Read Receipt 👻:** Measures read-to-response elapsed hours when the recipient has viewed a message. If a message is seen but unanswered for $>24$ hours, displays a custom ghost emoji checkmark, a custom timestamp (e.g. `Seen 2 วันที่แล้ว 👻`), and a pulse-animated ghost icon.
+- **Unskippable Fake Ad Card 📢:** Interjects funny sponsored wellness warning cards dynamically every 9 posts in the main feed containing locked skip buttons and distinguishable blue dashed highlights.
 
 ### Final QA & Security Audit
 Before deployment, a rigorous security and reliability audit was conducted:
