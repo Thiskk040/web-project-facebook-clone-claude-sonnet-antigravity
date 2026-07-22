@@ -3,7 +3,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle, Fish, Megaphone } from 'lucide-react';
+import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle, Sparkles, Megaphone } from 'lucide-react';
 import Navbar from './Navbar';
 import { getAvatarGradient } from './utils/avatarGradient';
 
@@ -386,7 +386,7 @@ export default function FeedPage() {
                                                         fontWeight: 'var(--font-semibold)'
                                                     }}
                                                 >
-                                                    <Fish size={14} /> {post.bait_score}% Bait
+                                                    <Sparkles size={14} /> {post.bait_score}% Glaze
                                                 </span>
                                             )}
                                             {post.user_id === user.id && (
@@ -558,28 +558,29 @@ export default function FeedPage() {
                 >
                     <div 
                         onClick={(e) => e.stopPropagation()}
+                        className="liquid-glaze"
                         style={{
                             width: '100%',
                             maxWidth: '480px',
                             padding: 'var(--space-6)',
                             borderRadius: 'var(--radius-lg)',
                             border: '1px solid var(--border-subtle)',
-                            background: 'var(--surface-1)',
-                            boxShadow: 'var(--shadow-2)',
+                            background: 'var(--surface-2)',
+                            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.4)',
                             textAlign: 'center',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '16px'
                         }}
                     >
-                        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(220, 38, 38, 0.12)', color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                            <Fish size={32} />
+                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--glaze-gradient)', color: '#100e0c', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', boxShadow: '0 4px 16px rgba(201, 182, 255, 0.4)' }}>
+                            <Sparkles size={32} />
                         </div>
-                        <h2 style={{ margin: 0, color: 'var(--danger)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                            วิเคราะห์จิตใต้สำนึกคนอวด (Bait Analysis)
+                        <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                            วิเคราะห์การประจบอวดอ้าง (Glaze Analysis)
                         </h2>
                         <div style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-bold)', color: 'var(--text-secondary)' }}>
-                            ความรุนแรงของกิเลส: <span style={{ color: 'var(--danger)' }}>{activeRoast.score}% Bait</span>
+                            ระดับความ Glaze: <span style={{ color: 'var(--accent)' }}>{activeRoast.score}% Glaze</span>
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', textAlign: 'left' }}>
@@ -590,31 +591,26 @@ export default function FeedPage() {
                         </div>
 
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--danger)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
                             <p style={{ margin: 0, fontWeight: 'var(--font-bold)', fontSize: 'var(--text-base)', color: 'var(--text-main)' }}>
                                 {activeRoast.translation}
                             </p>
                         </div>
 
-                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(220, 38, 38, 0.08)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--danger)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
-                            <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--danger)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
+                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(201, 182, 255, 0.1)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--text-main)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
                                 {activeRoast.roasts || "คนปกติเขาอ่านแล้วไม่มีอะไรเลย นอกจากความว่างเปล่าและความคิดในหัวของคุณ"}
                             </p>
                         </div>
 
                         <button 
                             onClick={() => setActiveRoast(null)}
-                            className="btn-primary" 
+                            className="btn-glaze" 
                             style={{
                                 width: '100%',
-                                padding: '12px',
+                                padding: '14px',
                                 borderRadius: 'var(--radius-md)',
-                                background: 'var(--danger)',
-                                color: '#ffffff',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontWeight: 'var(--font-bold)',
                                 marginTop: '8px',
                                 fontSize: 'var(--text-sm)'
                             }}

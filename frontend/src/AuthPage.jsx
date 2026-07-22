@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { LogIn, UserPlus, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
+import GlazeLogo from './GlazeLogo';
+import AntigravityCanvas from './AntigravityCanvas';
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
@@ -21,12 +23,17 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-split-wrapper">
+        <div className="auth-container" style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* Google Antigravity Particle Canvas Background */}
+            <AntigravityCanvas />
+
+            <div className="auth-split-wrapper" style={{ position: 'relative', zIndex: 1 }}>
                 {/* Branding Panel (Desktop) */}
                 <div className="auth-branding-panel">
                     <div>
-                        <h1 style={{ fontSize: 'var(--text-xl)', color: '#ffffff', marginBottom: 'var(--space-2)' }}>CloneBook</h1>
+                        <div style={{ marginBottom: 'var(--space-3)' }}>
+                            <GlazeLogo size={44} />
+                        </div>
                         <p style={{ fontSize: 'var(--text-md)', opacity: 0.9, color: '#ffffff', lineHeight: 'var(--leading-normal)' }}>
                             Connect with friends and the world around you in a simple, fast experience.
                         </p>
@@ -39,7 +46,7 @@ export default function AuthPage() {
                         </div>
                         <div className="flex items-center gap-3">
                             <ShieldCheck size={20} style={{ opacity: 0.9 }} />
-                            <span style={{ fontSize: 'var(--text-base)' }}>Hybrid engagement bait detector</span>
+                            <span style={{ fontSize: 'var(--text-base)' }}>Hybrid engagement glaze detector</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <Zap size={20} style={{ opacity: 0.9 }} />
@@ -62,7 +69,7 @@ export default function AuthPage() {
                     <form onSubmit={handleSubmit} className="flex-col gap-4">
                         <input type="text" placeholder="Username" required value={username} onChange={e => setUsername(e.target.value)} />
                         <input type="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} />
-                        <button type="submit" className="btn-primary" style={{ marginTop: 'var(--space-2)', width: '100%' }}>
+                        <button type="submit" className="btn-glaze" style={{ marginTop: 'var(--space-2)', width: '100%' }}>
                             {isLogin ? <><LogIn size={18}/> Login</> : <><UserPlus size={18}/> Register</>}
                         </button>
                     </form>

@@ -115,7 +115,7 @@ export default function MessagesPage() {
             
             <div className="container" style={{ flex: 1, display: 'flex', gap: 'var(--space-4)', paddingBottom: 'var(--space-4)', overflow: 'hidden' }}>
                 {/* Sidebar Column */}
-                <div style={{ width: '320px', display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius-md)', background: 'var(--surface-0)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                <div style={{ width: '320px', display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius-lg)', background: 'var(--surface-1)', backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-1)', overflow: 'hidden' }}>
                     <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)' }}>
                         <div style={{ position: 'relative' }}>
                             <Search size={16} style={{ position: 'absolute', top: 12, left: 12, color: 'var(--text-tertiary)' }} />
@@ -169,7 +169,7 @@ export default function MessagesPage() {
                 </div>
 
                 {/* Main Chat Area */}
-                <div style={{ flex: 1, borderRadius: 'var(--radius-md)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, borderRadius: 'var(--radius-lg)', background: 'var(--surface-1)', backdropFilter: 'blur(20px) saturate(1.6)', WebkitBackdropFilter: 'blur(20px) saturate(1.6)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-1)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                     {activeUser ? (
                         <>
                             <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-0)', gap: 'var(--space-3)' }} className="flex items-center">

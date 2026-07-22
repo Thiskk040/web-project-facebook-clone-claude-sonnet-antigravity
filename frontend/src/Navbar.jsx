@@ -3,7 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { Bell, MessageCircle, LogOut, Search, Sun, Moon, Home, User, Check, CheckCircle, CheckCircle2, Fish, EyeOff } from 'lucide-react';
+import { Bell, MessageCircle, LogOut, Search, Sun, Moon, Home, User, Check, CheckCircle, CheckCircle2, Sparkles, EyeOff } from 'lucide-react';
+import GlazeLogo from './GlazeLogo';
 
 const baseUrl = 'http://localhost:3000';
 
@@ -158,12 +159,14 @@ export default function Navbar() {
         }
     };
 
-    const toggleBaitBadge = () => {
+    const toggleGlazeBadge = () => {
         const newVal = !showBaitBadge;
         setShowBaitBadge(newVal);
         localStorage.setItem('showBaitBadge', String(newVal));
+        localStorage.setItem('showGlazeBadge', String(newVal));
         window.dispatchEvent(new Event('showBaitBadgeChange'));
-        showToastMessage(newVal ? 'Bait badges visible' : 'Bait badges hidden');
+        window.dispatchEvent(new Event('showGlazeBadgeChange'));
+        showToastMessage(newVal ? 'Glaze badges visible' : 'Glaze badges hidden');
     };
 
     const toggleTheme = () => {
@@ -181,8 +184,8 @@ export default function Navbar() {
             <div className="navbar flex items-center justify-between" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
                 {/* Zone 1: Logo & Search */}
                 <div className="flex items-center gap-4">
-                    <Link to="/" style={{ textDecoration: 'none', color: 'var(--accent)', display: 'flex', itemsCenter: 'center' }}>
-                        <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--accent)', fontWeight: 'var(--font-bold)' }}>CloneBook</h2>
+                    <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                        <GlazeLogo size={32} />
                     </Link>
 
                     <div style={{ position: 'relative' }} ref={searchRef}>
@@ -239,14 +242,14 @@ export default function Navbar() {
                         <Home size={20} />
                     </Link>
 
-                    {/* Bait Badge Toggle */}
+                    {/* Glaze Badge Toggle */}
                     <button
-                        onClick={toggleBaitBadge}
+                        onClick={toggleGlazeBadge}
                         className="btn-icon"
-                        title={showBaitBadge ? "Hide Bait Badge" : "Show Bait Badge"}
+                        title={showBaitBadge ? "Hide Glaze Badge" : "Show Glaze Badge"}
                         style={{ minWidth: 40, minHeight: 40 }}
                     >
-                        {showBaitBadge ? <Fish size={18} /> : <EyeOff size={18} />}
+                        {showBaitBadge ? <Sparkles size={18} /> : <EyeOff size={18} />}
                     </button>
 
                     {/* Theme Toggle */}
@@ -304,11 +307,13 @@ export default function Navbar() {
 
                     {/* Profile Link */}
                     <Link to={`/profile/${user?.username}`} className="flex items-center gap-2" style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-main)', textDecoration: 'none', fontSize: 'var(--text-sm)', minHeight: 40 }}>
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="" className="avatar" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-                        ) : (
-                            <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.8rem' }}>{(user?.username || '?')[0].toUpperCase()}</div>
-                        )}
+                        <span className="glaze-avatar-ring">
+                            {avatarUrl ? (
+                                <img src={avatarUrl} alt="" className="avatar" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                                <div className="avatar" style={{ width: 26, height: 26, fontSize: '0.75rem' }}>{(user?.username || '?')[0].toUpperCase()}</div>
+                            )}
+                        </span>
                         <span className="navbar-username-text">{user?.username}</span>
                     </Link>
 

@@ -5,7 +5,7 @@
 
 body {
   font-family: var(--font-sans);
-  background: radial-gradient(ellipse at top, rgba(24, 119, 242, 0.04), transparent 60%), var(--surface-0);
+  background: var(--bg-mesh);
   background-attachment: fixed;
   color: var(--text-main);
   transition: background-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard);
@@ -20,14 +20,70 @@ body {
   border-radius: var(--radius-md);
 }
 
-/* Floating material specifically for translucent overlays */
-.floating-material {
+/* Floating material / Liquid Glaze specifically for translucent overlays */
+.floating-material,
+.liquid-glaze {
+  position: relative;
   background: var(--surface-2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(28px) saturate(1.8) url(#liquid-glass-refraction);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
   border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-2);
   border-radius: var(--radius-lg);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.12),
+    inset 0 2px 1.5px rgba(255, 255, 255, 0.85),
+    inset 2px 0 2px rgba(154, 212, 255, 0.4),
+    inset -2px 0 2px rgba(255, 214, 232, 0.4),
+    inset 0 -2px 1.5px rgba(201, 182, 255, 0.3);
+  overflow: hidden;
+}
+
+:root[data-theme="dark"] .liquid-glaze,
+:root[data-theme="dark"] .floating-material {
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.65),
+    inset 0 2px 1.5px rgba(255, 255, 255, 0.35),
+    inset 2px 0 2px rgba(154, 212, 255, 0.2),
+    inset -2px 0 2px rgba(255, 214, 232, 0.2),
+    inset 0 -2px 1.5px rgba(0, 0, 0, 0.5);
+}
+
+.liquid-glaze::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glaze-sheen);
+  opacity: 0.65;
+  pointer-events: none;
+  transform: translateX(-100%);
+  transition: transform 700ms var(--ease-standard);
+}
+
+.liquid-glaze:hover::before {
+  transform: translateX(100%);
+}
+
+.liquid-pill {
+  border-radius: var(--radius-full);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Glaze Typography & Wordmark */
+.glaze-wordmark {
+  background: linear-gradient(135deg, var(--text-main) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-sans);
+}
+
+.glaze-wordmark-lg {
+  background: linear-gradient(135deg, #ffffff 0%, #ffd6e8 40%, #c9b6ff 70%, #9ad4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-sans);
 }
 
 /* Typography */
@@ -47,12 +103,13 @@ input, textarea {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
-  background: var(--surface-0);
+  background: var(--input-bg);
   color: var(--text-main);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   outline: none;
   transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
@@ -94,6 +151,57 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   transform: translateY(-1px);
 }
 
+/* Glaze Signature CTA Button */
+.btn-glaze {
+  background: var(--glaze-gradient);
+  color: #100e0c;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-bold);
+  font-size: var(--text-base);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(201, 182, 255, 0.35);
+  transition: all var(--duration-fast) var(--ease-standard);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.btn-glaze::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glaze-sheen);
+  opacity: 0.75;
+  pointer-events: none;
+  transform: translateX(-100%);
+  transition: transform 600ms var(--ease-standard);
+}
+
+.btn-glaze:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(201, 182, 255, 0.55);
+}
+
+.btn-glaze:hover::before {
+  transform: translateX(100%);
+}
+
+/* Personal User Avatar Ring */
+.glaze-avatar-ring {
+  padding: 2px;
+  background: var(--glaze-gradient);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(201, 182, 255, 0.3);
+}
+
 .btn-icon { 
   background: transparent; 
   color: var(--text-secondary); 
@@ -121,15 +229,38 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Components */
 .navbar {
-  position: sticky; top: 0; z-index: 50;
-  padding: var(--space-3) var(--space-5);
-  margin-bottom: var(--space-5);
+  position: sticky; 
+  top: 12px; 
+  z-index: 50;
+  max-width: 1040px;
+  margin: 12px auto var(--space-5) auto;
+  padding: 8px 20px;
   background: var(--surface-2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-subtle);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  box-shadow: var(--shadow-1);
+  backdrop-filter: blur(28px) saturate(1.8) url(#liquid-glass-refraction);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.12),
+    inset 0 2px 1.5px rgba(255, 255, 255, 0.85),
+    inset 2px 0 2px rgba(154, 212, 255, 0.4),
+    inset -2px 0 2px rgba(255, 214, 232, 0.4),
+    inset 0 -2px 1.5px rgba(201, 182, 255, 0.3);
+}
+
+:root[data-theme="dark"] .navbar {
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.65),
+    inset 0 2px 1.5px rgba(255, 255, 255, 0.35),
+    inset 2px 0 2px rgba(154, 212, 255, 0.2),
+    inset -2px 0 2px rgba(255, 214, 232, 0.2),
+    inset 0 -2px 1.5px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 1080px) {
+  .navbar {
+    margin: 12px 12px var(--space-5) 12px;
+  }
 }
 
 /* Notification Badge Scale Animation */
@@ -142,17 +273,21 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   100% { transform: scale(1); opacity: 1; }
 }
 
-.post-card {
+.post-card,
+.card-glass {
   padding: var(--space-5);
   margin-bottom: var(--space-5);
   background: var(--surface-1);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
   transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
-.post-card:hover {
+.post-card:hover,
+.card-glass:hover {
   box-shadow: var(--shadow-2);
 }
 
@@ -193,14 +328,18 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   display: flex;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-2);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border-subtle);
   background: var(--surface-1);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
 }
 
 .auth-branding-panel {
   flex: 1;
-  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  background: linear-gradient(135deg, rgba(24, 119, 242, 0.75), rgba(139, 92, 246, 0.75));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: var(--space-7);
   color: #ffffff;
   display: flex;
@@ -216,6 +355,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   flex-direction: column;
   justify-content: center;
   background: var(--surface-1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 @media (max-width: 1024px) {
@@ -317,5 +458,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .liquid-glaze::before, .btn-glaze::before {
+    display: none !important;
   }
 }

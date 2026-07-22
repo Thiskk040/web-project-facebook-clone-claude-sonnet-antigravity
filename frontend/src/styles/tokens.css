@@ -2,11 +2,12 @@
 
 :root[data-theme="light"],
 :root {
-  /* Surface Layers */
-  --surface-0: #f4f5f7;
-  --surface-1: #ffffff;
-  --surface-2: rgba(255, 255, 255, 0.72);
-  --border-subtle: rgba(15, 23, 42, 0.08);
+  /* Surface Layers — Translucent Liquid Glass */
+  --surface-0: #f8f6f2;
+  --surface-1: rgba(255, 255, 255, 0.65);
+  --surface-1-solid: #ffffff;
+  --surface-2: rgba(255, 255, 255, 0.82);
+  --border-subtle: rgba(255, 255, 255, 0.85);
   --border-strong: rgba(15, 23, 42, 0.16);
 
   /* Typography Colors */
@@ -23,12 +24,17 @@
   --surface: var(--surface-1);
   --glass-border: var(--border-subtle);
   --glass-shadow: var(--shadow-1);
-  --input-bg: var(--surface-1);
+  --input-bg: rgba(247, 244, 239, 0.65);
 
   /* Brand / Accent Colors */
   --accent: #1877f2;
   --accent-hover: #145dbf;
   --accent-contrast: #ffffff;
+
+  /* Glaze Signature Tokens & Vibrant Ambient Mesh */
+  --glaze-gradient: linear-gradient(135deg, #ffd6e8 0%, #c9b6ff 45%, #9ad4ff 100%);
+  --glaze-sheen: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 66%);
+  --bg-mesh: radial-gradient(at 10% 10%, rgba(255, 182, 217, 0.65) 0px, transparent 55%), radial-gradient(at 90% 15%, rgba(165, 216, 255, 0.65) 0px, transparent 55%), radial-gradient(at 50% 90%, rgba(216, 180, 254, 0.6) 0px, transparent 55%), #f8f6f2;
 
   /* Status Colors */
   --success: #16a34a;
@@ -36,20 +42,21 @@
   --warning: #d97706;
 
   /* Elevation Shadows */
-  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-2: 0 4px 16px rgba(15, 23, 42, 0.10);
+  --shadow-1: 0 4px 20px rgba(216, 180, 254, 0.12);
+  --shadow-2: 0 12px 36px rgba(216, 180, 254, 0.22);
 }
 
 :root[data-theme="dark"] {
-  /* Surface Layers */
-  --surface-0: #0b0d10;
-  --surface-1: #16191d;
-  --surface-2: rgba(22, 25, 29, 0.72);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  /* Surface Layers — Electric Obsidian Glass */
+  --surface-0: #090d16;
+  --surface-1: rgba(20, 25, 35, 0.65);
+  --surface-1-solid: #141923;
+  --surface-2: rgba(20, 25, 35, 0.85);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.22);
 
   /* Typography Colors */
-  --text-main: #e7e9ea;
+  --text-main: #f3f4f6;
   --text-secondary: #9ca3af;
   --text-tertiary: #6b7280;
 
@@ -62,12 +69,17 @@
   --surface: var(--surface-1);
   --glass-border: var(--border-subtle);
   --glass-shadow: var(--shadow-1);
-  --input-bg: var(--surface-1);
+  --input-bg: rgba(11, 15, 25, 0.65);
 
   /* Brand / Accent Colors */
   --accent: #4b9eff;
   --accent-hover: #74b4ff;
-  --accent-contrast: #0b0d10;
+  --accent-contrast: #090d16;
+
+  /* Glaze Signature Tokens & Electric Aurora Mesh */
+  --glaze-gradient: linear-gradient(135deg, #ffd6e8 0%, #c9b6ff 45%, #9ad4ff 100%);
+  --glaze-sheen: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.25) 48%, transparent 66%);
+  --bg-mesh: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.55) 0px, transparent 55%), radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.5) 0px, transparent 55%), radial-gradient(at 50% 100%, rgba(236, 72, 153, 0.45) 0px, transparent 55%), #090d16;
 
   /* Status Colors */
   --success: #22c55e;
@@ -75,8 +87,8 @@
   --warning: #fbbf24;
 
   /* Elevation Shadows */
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-1: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 36px rgba(0, 0, 0, 0.65);
 }
 
 :root {

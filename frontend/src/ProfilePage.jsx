@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { Image, Save, ArrowLeft, Heart, MessageSquare, UserMinus, Users, MessageCircle, Fish, Inbox } from 'lucide-react';
+import { Image, Save, ArrowLeft, Heart, MessageSquare, UserMinus, Users, MessageCircle, Sparkles, Inbox } from 'lucide-react';
 import Navbar from './Navbar';
 
 const baseUrl = 'http://localhost:3000';
@@ -27,10 +27,14 @@ export default function ProfilePage() {
     // Sync showBaitBadge status from Navbar events
     useEffect(() => {
         const handleBadgeChange = () => {
-            setShowBaitBadge(localStorage.getItem('showBaitBadge') !== 'false');
+            setShowBaitBadge(localStorage.getItem('showBaitBadge') !== 'false' && localStorage.getItem('showGlazeBadge') !== 'false');
         };
         window.addEventListener('showBaitBadgeChange', handleBadgeChange);
-        return () => window.removeEventListener('showBaitBadgeChange', handleBadgeChange);
+        window.addEventListener('showGlazeBadgeChange', handleBadgeChange);
+        return () => {
+            window.removeEventListener('showBaitBadgeChange', handleBadgeChange);
+            window.removeEventListener('showGlazeBadgeChange', handleBadgeChange);
+        };
     }, []);
 
     useEffect(() => {
@@ -160,13 +164,15 @@ export default function ProfilePage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4" style={{ marginTop: '-60px' }}>
                                 <div style={{ position: 'relative', width: '100px', height: '100px', zIndex: 1 }}>
-                                    {profile.profile_picture ? (
-                                        <img src={profile.profile_picture.startsWith('http') ? profile.profile_picture : `${baseUrl}${profile.profile_picture}`} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--surface-0)' }} />
-                                    ) : (
-                                        <div className="avatar" style={{ width: '100%', height: '100%', fontSize: '2.5rem', border: '4px solid var(--surface-0)' }}>
-                                            {(profile.username || '?')[0].toUpperCase()}
-                                        </div>
-                                    )}
+                                    <span className={isOwner ? "glaze-avatar-ring" : ""} style={{ width: '100%', height: '100%', borderRadius: '50%', display: 'inline-block' }}>
+                                        {profile.profile_picture ? (
+                                            <img src={profile.profile_picture.startsWith('http') ? profile.profile_picture : `${baseUrl}${profile.profile_picture}`} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--surface-0)' }} />
+                                        ) : (
+                                            <div className="avatar" style={{ width: '100%', height: '100%', fontSize: '2.5rem', border: '4px solid var(--surface-0)' }}>
+                                                {(profile.username || '?')[0].toUpperCase()}
+                                            </div>
+                                        )}
+                                    </span>
                                     {isEditing && (
                                         <label className="btn-icon" style={{ position: 'absolute', bottom: 0, right: -6, cursor: 'pointer', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', minWidth: 32, minHeight: 32 }}>
                                             <Image size={16}/>
@@ -332,7 +338,7 @@ export default function ProfilePage() {
                                                 fontWeight: 'var(--font-bold)'
                                             }}
                                         >
-                                            <Fish size={14} /> {post.bait_score}% Bait
+                                            <Sparkles size={14} /> {post.bait_score}% Glaze
                                         </span>
                                     )}
                                 </div>
@@ -370,28 +376,29 @@ export default function ProfilePage() {
                 >
                     <div 
                         onClick={(e) => e.stopPropagation()}
+                        className="liquid-glaze"
                         style={{
                             width: '100%',
                             maxWidth: '480px',
                             padding: 'var(--space-6)',
                             borderRadius: 'var(--radius-lg)',
                             border: '1px solid var(--border-subtle)',
-                            background: 'var(--surface-1)',
-                            boxShadow: 'var(--shadow-2)',
+                            background: 'var(--surface-2)',
+                            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.4)',
                             textAlign: 'center',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '16px'
                         }}
                     >
-                        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(220, 38, 38, 0.12)', color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                            <Fish size={32} />
+                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--glaze-gradient)', color: '#100e0c', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', boxShadow: '0 4px 16px rgba(201, 182, 255, 0.4)' }}>
+                            <Sparkles size={32} />
                         </div>
-                        <h2 style={{ margin: 0, color: 'var(--danger)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                            วิเคราะห์จิตใต้สำนึกคนอวด (Bait Analysis)
+                        <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                            วิเคราะห์การประจบอวดอ้าง (Glaze Analysis)
                         </h2>
                         <div style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-bold)', color: 'var(--text-secondary)' }}>
-                            ความรุนแรงของกิเลส: <span style={{ color: 'var(--danger)' }}>{activeRoast.score}% Bait</span>
+                            ระดับความ Glaze: <span style={{ color: 'var(--accent)' }}>{activeRoast.score}% Glaze</span>
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', textAlign: 'left' }}>
@@ -402,31 +409,26 @@ export default function ProfilePage() {
                         </div>
 
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--danger)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
                             <p style={{ margin: 0, fontWeight: 'var(--font-bold)', fontSize: 'var(--text-base)', color: 'var(--text-main)' }}>
                                 {activeRoast.translation}
                             </p>
                         </div>
 
-                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(220, 38, 38, 0.08)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--danger)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
-                            <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--danger)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
+                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(201, 182, 255, 0.1)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--text-main)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
                                 {activeRoast.roasts || "คนปกติเขาอ่านแล้วไม่มีอะไรเลย นอกจากความว่างเปล่าและความคิดในหัวของคุณ"}
                             </p>
                         </div>
 
                         <button 
                             onClick={() => setActiveRoast(null)}
-                            className="btn-primary" 
+                            className="btn-glaze" 
                             style={{
                                 width: '100%',
-                                padding: '12px',
+                                padding: '14px',
                                 borderRadius: 'var(--radius-md)',
-                                background: 'var(--danger)',
-                                color: '#ffffff',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontWeight: 'var(--font-bold)',
                                 marginTop: '8px',
                                 fontSize: 'var(--text-sm)'
                             }}

@@ -109,13 +109,15 @@ To guarantee regression safety and establish proper version control, a local git
 - **Repository Path:** `https://github.com/Thiskk040/web-project-facebook-clone-claude-sonnet-antigravity.git`
 - **Initial Backup Commit Hash:** `c84235d52cb3ea97423194c49c2217e4e6eaa91c`
 
-### 3. Gemini API Model Migration & Timeout Fix (July 22, 2026)
+## 📅 Development Progress — July 22, 2026
+
+### 1. Gemini API Model Migration & Timeout Fix
 Due to high response latency on the `gemini-3.5-flash` model (averaging ~15.6 seconds) exceeding the 10-second timeout limit and causing fallback failures, the following updates were implemented:
 - **Model Upgraded:** Migrated integration endpoint to the newer, highly responsive `gemini-3.6-flash` model.
 - **Timeout Adjusted:** Increased the Axios connection timeout limit from 10 seconds to 15 seconds to handle transient network delays safely.
 - **Result:** Gemini fallback latency decreased to 6-7 seconds, achieving 100% success rates on Thai slang parsing without triggering timeout errors.
 
-### 4. Calm Clarity UI/UX Redesign & Accessibility Refactor (July 22, 2026)
+### 2. Calm Clarity UI/UX Redesign & Accessibility Refactor
 Successfully completed the 9-Phase "Calm Clarity" Apple/HIG-inspired design system overhaul:
 - **Design Tokens Architecture:** Implemented `src/styles/tokens.css` exposing surface layers (`--surface-0`..`2`), semantic borders, contrast typography, 8px grid spacing (`--space-1`..`7`), radii (`--radius-sm`..`full`), and standardized motion (`cubic-bezier(0.4, 0, 0.2, 1)`).
 - **Navbar & Materiality Rules:** Restricted backdrop-filter blur exclusively to floating overlays (Navbar, Search & Notification dropdowns). Introduced mobile bottom navigation bar (`< 768px`) with solid background.
@@ -123,7 +125,7 @@ Successfully completed the 9-Phase "Calm Clarity" Apple/HIG-inspired design syst
 - **High Contrast Messaging:** Solved chat bubble contrast issues using solid `--accent` bubbles with `--accent-contrast` text for sent messages and `--surface-1` bubbles with `--text-main` text for received messages.
 - **AuthPage Styling Fix:** Removed browser default button background on the Login/Register toggle link (`"Already have an account? Login"`), applying a transparent background with `--text-secondary` color for high contrast and readability across dark & light themes.
 
-### 5. Icon System & Visual Polish Overhaul (July 22, 2026)
+### 3. Icon System & Visual Polish Overhaul
 Completed a comprehensive visual polish pass replacing all inline emojis with scalable `lucide-react` icons and enhancing layout depth:
 - **Zero Emoji Mandate:** Replaced all 13 inline emojis across `FeedPage.jsx`, `ProfilePage.jsx`, `Navbar.jsx`, and `MessagesPage.jsx` with `<Fish />`, `<Megaphone />`, `<Ghost />`, `<EyeOff />`, and `<CheckCircle2 />` icons. Verified 0 unicode emojis remain in `frontend/src`.
 - **Chat Bubble Contrast Fix:** Fixed received message bubbles in `MessagesPage.jsx` to use solid `var(--surface-1)` background instead of blending into the `var(--surface-0)` page background.
@@ -132,6 +134,49 @@ Completed a comprehensive visual polish pass replacing all inline emojis with sc
 - **Dynamic Avatar Gradients & Skeleton Loader:** Created `src/utils/avatarGradient.js` generating 5 hash-based gradient palettes for user avatars, and implemented CSS shimmer skeleton loading states (`.skeleton`).
 - **Avatar Spacing & Gap Utilities Fix:** Added complete `.gap-1` through `.gap-7` utility classes in `index.css` and `flex-shrink: 0` on avatar elements, ensuring a clean 12px (`var(--space-3)`) separation between profile pictures and usernames across `MessagesPage.jsx`, `Navbar.jsx`, `FeedPage.jsx`, and `ProfilePage.jsx`.
 - **Centered Messages Empty State:** Redesigned the unselected chat container in `MessagesPage.jsx` into a centered, visually engaging empty state card with a circular `<MessageSquare />` icon badge and clean typography.
+
+### 4. "Glaze" Liquid Glass Design System Overhaul
+Successfully transitioned the interface to the **"Glaze" Liquid Glass Design System**:
+- **Rebranding to `glaze`:** Updated application branding to lowercase **glaze** with a gradient sheen wordmark in `Navbar.jsx`, `AuthPage.jsx`, and `index.html`.
+- **Cloud Dancer Warm Neutral Palette:** Shifted background neutrals in `tokens.css` from cold grey to Pantone Cloud Dancer warm white (`#f7f4ef` light) and warm obsidian (`#100e0c` dark).
+- **Liquid Glaze Material System (`.liquid-glaze`):** Upgraded floating overlays (Navbar, Search/Notification dropdowns, Roast Modal) with 24px blur + 1.4 saturation, top specular border inset highlight, and sheen hover reflection animations.
+- **Signature Moments (`.btn-glaze` & `.glaze-avatar-ring`):** Applied signature pastel gradient CTA button (`.btn-glaze`) on AuthPage and double-ringed gradient outline (`.glaze-avatar-ring`) around the authenticated user's avatar.
+- **Accessibility & Motion Compliance:** Enforced `@media (prefers-reduced-motion: reduce)` to disable sheen sweeps for reduced-motion users, maintaining $\ge 4.5:1$ AA text contrast ratios.
+
+### 5. Apple WWDC iOS 26 Liquid Glass UI Kit Transformation
+Upgraded the interface to match Apple's WWDC iOS 26 Liquid Glass UI Kit specification:
+- **Ambient Aurora & Champagne Mesh Backdrops:** Configured multi-gradient ambient space/aurora mesh in dark mode (`var(--bg-mesh-dark)`) and champagne-rose pearlescent mesh in light mode (`var(--bg-mesh-light)`).
+- **Floating Capsule Navbar:** Transformed `.navbar` into a floating capsule container (`border-radius: var(--radius-full)`, `margin: 12px auto`, `max-width: 1040px`).
+- **WWDC Dual Specular Highlight Engine:** Applied top refraction rim highlights (`inset 0 1.5px 1px rgba(255, 255, 255, 0.65)`) and bottom internal reflection shadows (`inset 0 -1.5px 1px rgba(255, 255, 255, 0.15)`).
+- **Liquid Pill Controls:** Introduced `.liquid-pill` utility styling for pill-shaped inputs, buttons, and capsule active states.
+
+### 6. Glaze Analysis Modal Redesign & Bait → Glaze Renaming
+Completed the Liquid Glaze modal upgrade and feature renaming across the app:
+- **Liquid Glaze Analysis Modal:** Transformed the Roast Analysis window into a translucent `.liquid-glaze` container (`background: var(--surface-2)` with 28px blur and top specular refraction highlights), replacing red warning themes with a circular pastel `--glaze-gradient` badge icon and `.btn-glaze` action button.
+- **Bait → Glaze Feature Renaming & Icon Migration:** Renamed all user-facing UI labels, badges (`{score}% Glaze`), tooltips (`Show Glaze Badge`), toasts (`Glaze badges visible`), and modal titles (`วิเคราะห์การประจบอวดอ้าง (Glaze Analysis)`) across `Navbar.jsx`, `FeedPage.jsx`, `ProfilePage.jsx`, and `AuthPage.jsx`. Replaced the legacy fish icon (`<Fish />`) with the Lucide **`<Sparkles />`** icon to match the Glaze theme.
+
+### 7. Authentic Liquid Glass Physics & Refraction Engine (`feDisplacementMap`)
+Upgraded static glassmorphism to an authentic **Liquid Glass Physics Engine**:
+- **SVG Background Refraction Warping (`feDisplacementMap`):** Inserted a global hidden SVG filter (`#liquid-glass-refraction`) into `index.html` combining `feTurbulence` and `feDisplacementMap` to physically distort underlying pixels beneath floating glass containers.
+- **Chromatic Prism Specular Edge Dispersion:** Upgraded `.liquid-glaze` and `.navbar` with multi-channel specular rim highlights (`inset 0 2px 1.5px rgba(255, 255, 255, 0.85)` top light, `inset 2px 0 2px rgba(154, 212, 255, 0.4)` cyan left dispersion, `inset -2px 0 2px rgba(255, 214, 232, 0.4)` rose right dispersion).
+
+### 8. Light Theme Vibrant Mesh & Translucent Liquid Glass Cards
+Solved jarring solid white card cutouts in Light Theme by uniting vibrant background glows with translucent glass surface cards:
+- **Vibrant Liquid Gradient Background Mesh:** Upgraded Light Theme `--bg-mesh` with vibrant multi-gradient glows (Magenta Rose `#ffb6d9` + Electric Cyan `#a5d8ff` + Deep Lavender `#d8b4fe`).
+- **Translucent Liquid Glass Cards (`.post-card`, `.card-glass`):** Converted Post cards, Suggested Friends sidebar, and Messages Pane containers to translucent surfaces (`background: rgba(255, 255, 255, 0.65)` with `backdrop-filter: blur(20px) saturate(1.6)`), allowing background colors to refract smoothly through cards.
+- **Inset Glass Text Fields:** Updated `textarea` and `input` elements to use translucent inset glass styling (`background: rgba(247, 244, 239, 0.65)` with `inset shadow`).
+
+### 9. Modern Tech Glaze Logo Component (`GlazeLogo.jsx`)
+Designed and deployed a high-tech logo component (`src/GlazeLogo.jsx`) matching Apple WWDC and Raycast aesthetics:
+- **Interlocking Liquid Glass Capsule Badge:** Created a vector logo mark combining a translucent glass capsule badge (`border-radius: var(--radius-full)`, `backdrop-filter: blur(20px)`), an inner iridescent liquid optical spark, specular top reflection arcs, and an optics symbol.
+- **Wordmark Integration:** Paired the glass capsule badge with a crisp lowercase `glaze` wordmark (`.glaze-wordmark`).
+- **Global Deployment:** Integrated `<GlazeLogo size={32} />` across `Navbar.jsx`, `<GlazeLogo size={44} />` across `AuthPage.jsx`, and updated `public/favicon.svg`.
+
+### 10. Google Antigravity Particle Canvas Animation (`AntigravityCanvas.jsx`)
+Built a high-performance 60fps HTML5 Canvas particle swirl animation (`src/AntigravityCanvas.jsx`) on `AuthPage.jsx`:
+- **Swirling Antigravity Particle Constellation:** Rendered 160+ elongated pastel particle dashes (Magenta, Cyan, Violet, Sun Yellow, Electric Blue) orbiting in a dynamic antigravity swirl vortex behind the Auth form layout.
+- **Mouse Interactivity & Gravity Physics:** Added real-time mouse tracking (`mousemove`) applying antigravity spring forces and orbital rotation to nearby particles.
+- **Translucent Glass Layering:** Placed the particle canvas behind translucent Liquid Glaze Auth panels (`.auth-branding-panel` & `.auth-form-panel` with `backdrop-filter: blur(28px)`).
 
 ---
 
