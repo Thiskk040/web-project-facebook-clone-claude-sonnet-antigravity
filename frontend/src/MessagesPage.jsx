@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 import { io } from 'socket.io-client';
-import { ArrowLeft, Send, Search } from 'lucide-react';
+import { ArrowLeft, Send, Search, Ghost } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import Navbar from './Navbar';
 
 const baseUrl = 'http://localhost:3000';
 
@@ -13,7 +14,7 @@ export default function MessagesPage() {
     const initialUserId = searchParams.get('user');
 
     const [conversations, setConversations] = useState([]);
-    const [activeUser, setActiveUser] = useState(null); // The user object we are chatting with
+    const [activeUser, setActiveUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -29,16 +30,17 @@ export default function MessagesPage() {
                 setConversations(res.data);
                 
                 if (initialUserId) {
-                    // Try to find the user in conversations, if not, search for them
                     const existing = res.data.find(c => c.id === parseInt(initialUserId));
                     if (existing) {
                         selectConversation(existing);
                     } else {
-                        // We don't have them in history, fetch basic user info to start chat
-                        const userRes = await axios.get(`${baseUrl}/users/search?q=`, { headers: { Authorization: `Bearer ${token}` } });
-                        const target = userRes.data.find(u => u.id === parseInt(initialUserId));
-                        if (target) {
-                            setActiveUser({ id: target.id, username: target.username, profile_picture: target.profile_picture });
+                        try {
+                            const userRes = await axios.get(`${baseUrl}/users/by-id/${initialUserId}`, { headers: { Authorization: `Bearer ${token}` } });
+                            if (userRes.data) {
+                                setActiveUser({ id: userRes.data.id, username: userRes.data.username, profile_picture: userRes.data.profile_picture });
+                            }
+                        } catch (err) {
+                            console.error("Error loading chat target user:", err);
                         }
                     }
                 }
@@ -50,14 +52,12 @@ export default function MessagesPage() {
         socketRef.current = socket;
 
         socket.on(`new_message_${user.id}`, (msg) => {
-            // Update messages if it's the active chat
             setActiveUser(currentActive => {
                 if (currentActive && (msg.sender_id === currentActive.id || msg.receiver_id === currentActive.id)) {
                     setMessages(prev => [...prev, msg]);
                 }
                 return currentActive;
             });
-            // Update conversation list
             fetchConversations();
         });
 
@@ -70,7 +70,6 @@ export default function MessagesPage() {
                 try {
                     const res = await axios.get(`${baseUrl}/messages/${activeUser.id}`, { headers: { Authorization: `Bearer ${token}` } });
                     setMessages(res.data);
-                    // Mark as read in conversation list locally
                     setConversations(prev => prev.map(c => c.id === activeUser.id ? { ...c, is_read: 1 } : c));
                 } catch (err) { console.error(err); }
             };
@@ -88,7 +87,7 @@ export default function MessagesPage() {
         if (q.trim()) {
             try {
                 const res = await axios.get(`${baseUrl}/users/search?q=${q}`, { headers: { Authorization: `Bearer ${token}` } });
-                setSearchResults(res.data.filter(u => u.friend_status === 'accepted')); // Only friends
+                setSearchResults(res.data.filter(u => u.friend_status === 'accepted'));
             } catch (e) {}
         } else {
             setSearchResults([]);
@@ -107,38 +106,33 @@ export default function MessagesPage() {
         try {
             await axios.post(`${baseUrl}/messages`, { receiver_id: activeUser.id, content: newMessage }, { headers: { Authorization: `Bearer ${token}` } });
             setNewMessage('');
-            // The socket will bring the message back, or we can optimistic update. 
-            // The socket 'new_message_req.user.id' is emitted to sender too.
         } catch (err) { console.error(err); }
     };
 
     return (
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="glass navbar flex items-center gap-4">
-                <Link to="/" className="btn-icon" style={{textDecoration: 'none', color: 'var(--text-color)'}}><ArrowLeft size={20}/></Link>
-                <h2>Messages</h2>
-            </div>
+            <Navbar />
             
-            <div className="container" style={{ flex: 1, display: 'flex', gap: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
-                {/* Sidebar */}
-                <div className="glass" style={{ width: '300px', display: 'flex', flexDirection: 'column', borderRadius: '12px' }}>
-                    <div style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)' }}>
+            <div className="container" style={{ flex: 1, display: 'flex', gap: 'var(--space-4)', paddingBottom: 'var(--space-4)', overflow: 'hidden' }}>
+                {/* Sidebar Column */}
+                <div style={{ width: '320px', display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius-md)', background: 'var(--surface-0)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                    <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)' }}>
                         <div style={{ position: 'relative' }}>
-                            <Search size={16} style={{ position: 'absolute', top: 10, left: 10, color: 'var(--text-muted)' }} />
+                            <Search size={16} style={{ position: 'absolute', top: 12, left: 12, color: 'var(--text-tertiary)' }} />
                             <input 
                                 type="text" 
                                 placeholder="Search friends to message..." 
                                 value={searchQuery}
                                 onChange={handleSearch}
-                                style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: '20px', border: '1px solid var(--glass-border)', background: 'var(--input-bg)' }}
+                                style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)', background: 'var(--surface-1)', fontSize: 'var(--text-sm)' }}
                             />
                         </div>
                         {searchQuery && (
-                            <div style={{ marginTop: '10px', background: 'var(--glass-bg)', borderRadius: '8px', overflow: 'hidden' }}>
+                            <div style={{ marginTop: 'var(--space-2)', background: 'var(--surface-1)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
                                 {searchResults.map(u => (
-                                    <div key={u.id} onClick={() => selectConversation(u)} style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)' }} className="flex items-center gap-2">
-                                        {u.profile_picture ? <img src={u.profile_picture.startsWith('http') ? u.profile_picture : `${baseUrl}${u.profile_picture}`} alt="" className="avatar" style={{width: 30, height: 30, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 30, height: 30, fontSize: '0.8rem'}}>{u.username[0].toUpperCase()}</div>}
-                                        <span>{u.username}</span>
+                                    <div key={u.id} onClick={() => selectConversation(u)} style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)' }} className="flex items-center gap-2">
+                                        {u.profile_picture ? <img src={u.profile_picture.startsWith('http') ? u.profile_picture : `${baseUrl}${u.profile_picture}`} alt="" className="avatar" style={{width: 32, height: 32, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 32, height: 32, fontSize: '0.8rem'}}>{(u.username || '?')[0].toUpperCase()}</div>}
+                                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-main)' }}>{u.username}</span>
                                     </div>
                                 ))}
                             </div>
@@ -151,20 +145,20 @@ export default function MessagesPage() {
                                 key={c.id} 
                                 onClick={() => selectConversation(c)}
                                 style={{ 
-                                    padding: '16px', 
-                                    borderBottom: '1px solid var(--glass-border)', 
+                                    padding: 'var(--space-4)', 
+                                    borderBottom: '1px solid var(--border-subtle)', 
                                     cursor: 'pointer',
-                                    background: activeUser?.id === c.id ? 'var(--glass-border)' : 'transparent',
-                                    fontWeight: (!c.is_read && c.sender_id !== user.id) ? 'bold' : 'normal'
+                                    background: activeUser?.id === c.id ? 'var(--surface-1)' : 'transparent',
+                                    fontWeight: (!c.is_read && c.sender_id !== user.id) ? 'var(--font-bold)' : 'var(--font-regular)'
                                 }} 
                                 className="flex items-center gap-3"
                             >
-                                {c.profile_picture ? <img src={c.profile_picture.startsWith('http') ? c.profile_picture : `${baseUrl}${c.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 40, height: 40}}>{c.username[0].toUpperCase()}</div>}
+                                {c.profile_picture ? <img src={c.profile_picture.startsWith('http') ? c.profile_picture : `${baseUrl}${c.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 40, height: 40}}>{(c.username || '?')[0].toUpperCase()}</div>}
                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span style={{ fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.username}</span>
+                                        <span style={{ fontSize: 'var(--text-base)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-main)' }}>{c.username}</span>
                                     </div>
-                                    <div style={{ fontSize: '0.8rem', color: (!c.is_read && c.sender_id !== user.id) ? 'var(--text-color)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <div style={{ fontSize: 'var(--text-xs)', color: (!c.is_read && c.sender_id !== user.id) ? 'var(--text-main)' : 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {c.sender_id === user.id ? 'You: ' : ''}{c.last_message}
                                     </div>
                                 </div>
@@ -174,30 +168,86 @@ export default function MessagesPage() {
                 </div>
 
                 {/* Main Chat Area */}
-                <div className="glass flex-col" style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ flex: 1, borderRadius: 'var(--radius-md)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                     {activeUser ? (
                         <>
-                            <div style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.05)' }} className="flex items-center gap-3">
-                                {activeUser.profile_picture ? <img src={activeUser.profile_picture.startsWith('http') ? activeUser.profile_picture : `${baseUrl}${activeUser.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 40, height: 40}}>{activeUser.username[0].toUpperCase()}</div>}
-                                <h3 style={{ margin: 0 }}>{activeUser.username}</h3>
+                            <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-0)' }} className="flex items-center gap-3">
+                                {activeUser.profile_picture ? <img src={activeUser.profile_picture.startsWith('http') ? activeUser.profile_picture : `${baseUrl}${activeUser.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 40, height: 40}}>{(activeUser.username || '?')[0].toUpperCase()}</div>}
+                                <h3 style={{ margin: 0, fontSize: 'var(--text-md)', color: 'var(--text-main)' }}>{activeUser.username}</h3>
                             </div>
                             
-                            <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {messages.map(m => {
+                            <div style={{ flex: 1, padding: 'var(--space-5)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                                {messages.map((m, idx) => {
                                     const isMe = m.sender_id === user.id;
+                                    const isGhosted = isMe && m.is_read === 1 && m.hours_since_seen >= 24;
+                                    const prevMsg = messages[idx - 1];
+                                    const isGrouped = prevMsg && prevMsg.sender_id === m.sender_id && (new Date(m.created_at) - new Date(prevMsg.created_at) < 120000);
+
                                     return (
-                                        <div key={m.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
-                                            <div style={{ 
-                                                background: isMe ? 'var(--primary-color)' : 'var(--input-bg)', 
-                                                color: isMe ? '#fff' : 'var(--text-color)',
-                                                padding: '10px 14px', 
-                                                borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                                                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                                            }}>
-                                                {m.content}
-                                            </div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
-                                                {new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                        <div 
+                                            key={m.id} 
+                                            style={{ 
+                                                alignSelf: isMe ? 'flex-end' : 'flex-start', 
+                                                maxWidth: '70%',
+                                                display: 'flex',
+                                                gap: 'var(--space-2)',
+                                                alignItems: 'center',
+                                                justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                                marginTop: isGrouped ? 'var(--space-1)' : 'var(--space-4)'
+                                            }}
+                                        >
+                                            {isGhosted && (
+                                                <Ghost 
+                                                    size={18} 
+                                                    style={{ 
+                                                        color: 'var(--text-tertiary)', 
+                                                        opacity: 0.6, 
+                                                        animation: 'pulse 2s infinite' 
+                                                    }} 
+                                                    title={`โดนดองแชทมา ${Math.floor(m.hours_since_seen)} ชั่วโมงแล้ว 👻`}
+                                                />
+                                            )}
+                                            
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <div style={{ 
+                                                    background: isMe ? 'var(--accent)' : 'var(--surface-0)', 
+                                                    color: isMe ? 'var(--accent-contrast)' : 'var(--text-main)',
+                                                    padding: '10px 14px', 
+                                                    borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                                                    border: isMe ? 'none' : '1px solid var(--border-subtle)',
+                                                    boxShadow: 'var(--shadow-1)',
+                                                    fontSize: 'var(--text-base)',
+                                                    lineHeight: 'var(--leading-thai)'
+                                                }}>
+                                                    {m.content}
+                                                </div>
+                                                {!isGrouped && (
+                                                    <div style={{ 
+                                                        fontSize: 'var(--text-xs)', 
+                                                        color: 'var(--text-tertiary)', 
+                                                        marginTop: '4px', 
+                                                        textAlign: isMe ? 'right' : 'left',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: isMe ? 'flex-end' : 'flex-start',
+                                                        gap: '4px'
+                                                    }}>
+                                                        <span>{new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                        {isMe && (
+                                                            m.is_read === 1 ? (
+                                                                m.hours_since_seen >= 24 ? (
+                                                                    <span style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
+                                                                        · Seen {Math.floor(m.hours_since_seen / 24)} วันที่แล้ว 👻
+                                                                    </span>
+                                                                ) : (
+                                                                    <span style={{ color: 'var(--accent)' }}> · Seen</span>
+                                                                )
+                                                            ) : (
+                                                                <span> · Sent</span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )
@@ -205,21 +255,21 @@ export default function MessagesPage() {
                                 <div ref={messagesEndRef} />
                             </div>
                             
-                            <form onSubmit={handleSend} style={{ padding: '16px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '12px' }}>
+                            <form onSubmit={handleSend} style={{ padding: 'var(--space-4)', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 'var(--space-3)' }}>
                                 <input 
                                     type="text" 
                                     placeholder="Type a message..." 
                                     value={newMessage}
                                     onChange={e => setNewMessage(e.target.value)}
-                                    style={{ flex: 1, padding: '12px', borderRadius: '24px', border: '1px solid var(--glass-border)', background: 'var(--input-bg)' }}
+                                    style={{ flex: 1, padding: '12px var(--space-4)', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)', background: 'var(--surface-0)' }}
                                 />
-                                <button type="submit" className="btn-primary" style={{ padding: '12px', borderRadius: '50%' }} disabled={!newMessage.trim()}>
+                                <button type="submit" className="btn-primary" style={{ padding: '12px', borderRadius: '50%', minWidth: 44, minHeight: 44 }} disabled={!newMessage.trim()}>
                                     <Send size={18} />
                                 </button>
                             </form>
                         </>
                     ) : (
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 'var(--text-base)' }}>
                             Select a conversation or search for a friend to start messaging.
                         </div>
                     )}

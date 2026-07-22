@@ -28,6 +28,16 @@ router.get('/:userId', authenticateToken, (req, res) => {
         ORDER BY created_at ASC
     `, [req.user.id, req.params.userId, req.params.userId, req.user.id], (err, rows) => {
         if (err) throw err;
+        
+        if (rows && rows.length > 0) {
+            const lastMsg = rows[rows.length - 1];
+            if (lastMsg.sender_id === req.user.id && lastMsg.is_read === 1) {
+                const createdTime = new Date(lastMsg.created_at);
+                const hours = (new Date() - createdTime) / (1000 * 60 * 60);
+                lastMsg.hours_since_seen = hours;
+            }
+        }
+
         db.run("UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ?", [req.params.userId, req.user.id]);
         res.json(rows);
     });

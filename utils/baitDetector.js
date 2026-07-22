@@ -25,7 +25,7 @@ function loadPatternsFromDb() {
             }
             return;
         }
-        
+
         console.log(`[BaitDetector] Successfully loaded ${rows ? rows.length : 0} patterns from SQLite.`);
         cachedPatterns = (rows || []).map(row => {
             try {
@@ -89,11 +89,11 @@ function detectBaitLocal(content) {
 function extractFirstJson(text) {
     const start = text.indexOf('{');
     if (start === -1) return text;
-    
+
     let braceCount = 0;
     let inString = false;
     let escaped = false;
-    
+
     for (let i = start; i < text.length; i++) {
         const char = text[i];
         if (inString) {
@@ -154,7 +154,7 @@ async function detectBait(content) {
 หากข้อความทั่วไปธรรมดา ไม่มีลักษณะล่อซื้อเลย ให้ตอบกลับ {"score": 0, "translations": [], "roasts": []}`;
 
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
             {
                 contents: [
                     {
@@ -171,7 +171,7 @@ async function detectBait(content) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                timeout: 10000 // 10 seconds timeout
+                timeout: 15000 // 15 seconds timeout
             }
         );
 

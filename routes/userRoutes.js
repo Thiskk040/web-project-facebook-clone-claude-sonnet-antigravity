@@ -42,6 +42,14 @@ router.get('/search', authenticateToken, (req, res) => {
     });
 });
 
+router.get('/by-id/:id', authenticateToken, (req, res) => {
+    db.get("SELECT id, username, profile_picture FROM users WHERE id = ?", [req.params.id], (err, user) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    });
+});
+
 router.get('/profile/:username', authenticateToken, (req, res) => {
     db.get("SELECT id, username, profile_picture, bio, cover_photo FROM users WHERE username = ?", [req.params.username], (err, user) => {
         if (err || !user) return res.status(404).json({ error: "User not found" });

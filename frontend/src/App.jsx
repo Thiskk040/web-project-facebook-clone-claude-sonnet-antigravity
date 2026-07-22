@@ -5,6 +5,8 @@ import FeedPage from './FeedPage';
 import ProfilePage from './ProfilePage';
 import MessagesPage from './MessagesPage';
 
+import { useEffect } from 'react';
+
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
   return token ? children : <Navigate to="/auth" />;
@@ -12,6 +14,12 @@ const ProtectedRoute = ({ children }) => {
 
 function AppRoutes() {
   const { token } = useAuth();
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
   return (
     <Routes>
       <Route path="/auth" element={token ? <Navigate to="/" /> : <AuthPage />} />

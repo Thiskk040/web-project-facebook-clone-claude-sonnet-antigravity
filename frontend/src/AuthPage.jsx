@@ -31,13 +31,26 @@ export default function AuthPage() {
                 <form onSubmit={handleSubmit} className="flex-col gap-4">
                     <input type="text" placeholder="Username" required value={username} onChange={e => setUsername(e.target.value)} />
                     <input type="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} />
-                    <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
+                    <button type="submit" className="btn-primary" style={{ marginTop: '10px', width: '100%' }}>
                         {isLogin ? <><LogIn size={20}/> Login</> : <><UserPlus size={20}/> Register</>}
                     </button>
                 </form>
 
-                <div style={{ marginTop: '30px' }}>
-                    <button onClick={() => setIsLogin(!isLogin)} style={{ color: 'var(--text-muted)' }}>
+                <div style={{ marginTop: '24px' }}>
+                    <button 
+                        type="button"
+                        onClick={() => setIsLogin(!isLogin)} 
+                        style={{ 
+                            background: 'transparent', 
+                            color: 'var(--text-secondary)', 
+                            fontSize: 'var(--text-sm)',
+                            fontWeight: 'var(--font-medium)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '8px 16px',
+                            borderRadius: 'var(--radius-sm)'
+                        }}
+                    >
                         {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
                     </button>
                 </div>

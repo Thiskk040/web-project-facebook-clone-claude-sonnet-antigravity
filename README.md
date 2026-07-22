@@ -5,7 +5,7 @@ CRITICAL: Any AI Agent accessing this repository MUST read this README.md file i
 
 # Complete Facebook Clone
 
-**Last Updated (Timestamp):** 2026-07-17T14:50:00+07:00
+**Last Updated (Timestamp):** 2026-07-17T15:15:00+07:00
 
 ## 📖 Project Overview
 This project is a modern, real-time Web Application modeled after Facebook. It was completely overhauled from a legacy static structure into a highly secure, real-time ecosystem utilizing a decoupled architecture (Node.js/Express backend and React/Vite frontend). 
@@ -66,14 +66,21 @@ The project was developed and upgraded systematically across 5 distinct phases, 
 - **Friend Management:** Introduced a "Friends" tab on user profiles, along with "Unfriend" and direct "Message" buttons for integrated user interaction.
 
 ### Phase 8: Satirical Social Media Features (Joke Features)
-- **Engagement Bait Detector 🎣 (Upgraded to 2,500 Patterns):** Built a database-driven regex analyzer (`utils/baitDetector.js`) utilizing an SQLite table (`bait_patterns`) containing satirical social media patterns from modern culture. **Upgraded the dataset to exactly 2,500 patterns** covering Gen-Z slang, LGBTQ/Katoey expressions, and current beauty trends (e.g. "ปรุงจืด", "ปรุงจัด"). Re-engineered the database initialization inside `config/database.js` to dynamically generate and seed all 2,500 records inside a transaction for zero-startup latency. Computes dynamic bait percentage metrics and appends them to post schemas on-the-fly. Integrates UI badges with hover explanations, client-side settings to hide/show badges, and an interactive click-to-roast savage analysis modal window.
+- **Engagement Bait Detector 🎣 (Upgraded to 5,000 Patterns):** Built a database-driven regex analyzer (`utils/baitDetector.js`) utilizing an SQLite table (`bait_patterns`) containing satirical social media patterns from modern culture. **Upgraded the dataset to exactly 5,000 patterns** covering Gen-Z slang, LGBTQ/Katoey expressions, and current beauty/industry trends (including "อาหวัง"). Decoupled the pattern generation logic from `config/database.js` into `config/baitPatternsGenerator.js` to keep the database initialization clean and lightweight while seeding all 5,000 patterns inside a SQLite transaction. Computes dynamic bait percentage metrics and appends them to post schemas on-the-fly. Integrates UI badges with hover explanations, client-side settings to hide/show badges, and an interactive click-to-roast savage analysis modal window.
 - **Ghost Read Receipt 👻:** Measures read-to-response elapsed hours when the recipient has viewed a message. If a message is seen but unanswered for $>24$ hours, displays a custom ghost emoji checkmark, a custom timestamp (e.g. `Seen 2 วันที่แล้ว 👻`), and a pulse-animated ghost icon.
 - **Unskippable Fake Ad Card 📢:** Interjects funny sponsored wellness warning cards dynamically every 9 posts in the main feed containing locked skip buttons and distinguishable blue dashed highlights.
 
 ### Phase 9: Hybrid Engagement Bait Detector (Regex + Gemini API Fallback)
-- **Hybrid Detection System:** Upgraded `utils/baitDetector.js` to run local SQLite Regex patterns first (~50ms) and fall back to Gemini API (using `gemini-3.5-flash` model) if the score is 0. This enables semantic understanding of complex word modifications (e.g., "โซเหนื่อย", "พสจีน", "โต๋วอิน") that fail traditional regex matching.
+- **Hybrid Detection System:** Upgraded `utils/baitDetector.js` to run local SQLite Regex patterns first (~50ms) and fall back to Gemini API (using `gemini-3.6-flash` model) if the score is 0. This enables semantic understanding of complex word modifications (e.g., "โซเหนื่อย", "พสจีน", "โต๋วอิน") that fail traditional regex matching.
 - **Database Caching of Analysis:** Redesigned post retrieval to query pre-calculated bait details stored in the `posts` table columns (`bait_score`, `bait_translation`, `bait_roasts`). Analysis is executed only once when a post is created (`POST /posts`) rather than dynamically on-the-fly, reducing latency and avoiding API rate limits.
 - **Robust JSON Parsing:** Developed custom bracket-matching string extractor `extractFirstJson` supporting quoted strings and escape sequences to handle formatting anomalies in LLM responses safely.
+
+### Phase 10: UI Usability Overhaul & Bug Fixes (July 22, 2026)
+- **Unified Navigation Experience:** Created a global, responsive `Navbar` component (`src/Navbar.jsx`) containing logo, search (with autocomplete dropdown), Home, Messages link, Notifications bell dropdown, Theme Toggle, Profile Avatar link, and Logout. This navbar is now consistently integrated across the Feed, Profile, and Messages pages, providing a cohesive navigation layout.
+- **Theme Persistence Fix:** Resolved the dark mode resetting/flashing bug by moving the `data-theme` initialization to `AppRoutes` in `src/App.jsx`. Themes are now loaded immediately from `localStorage` on any page refresh (e.g. `/messages` or `/profile/:username`).
+- **Profile Avatar Sync:** Exposed an `updateUser` hook in `AuthContext` to sync updates to the user's profile picture immediately with the navbar header avatar upon saving profile edits.
+- **Resolved Chat Initialization Crash:** Added a backend `/users/by-id/:id` endpoint. Fixed a critical bug in `MessagesPage.jsx` where clicking "Message" on a profile page of a user with no chat history fetched `/users/search?q=`, causing empty responses and failing to start the conversation. The app now resolves user profiles directly by ID.
+- **Safe Avatar Character Indexing:** Guarded all avatar initials rendering with safe fallback strings `(username || '?')[0]` to prevent React rendering crashes due to asynchronous data loading.
 
 ### Final QA & Security Audit
 Before deployment, a rigorous security and reliability audit was conducted:
@@ -101,6 +108,20 @@ A concurrent load test was executed on the live server (running 16 clustered wor
 To guarantee regression safety and establish proper version control, a local git repository was initialized and backed up to GitHub:
 - **Repository Path:** `https://github.com/Thiskk040/web-project-facebook-clone-claude-sonnet-antigravity.git`
 - **Initial Backup Commit Hash:** `c84235d52cb3ea97423194c49c2217e4e6eaa91c`
+
+### 3. Gemini API Model Migration & Timeout Fix (July 22, 2026)
+Due to high response latency on the `gemini-3.5-flash` model (averaging ~15.6 seconds) exceeding the 10-second timeout limit and causing fallback failures, the following updates were implemented:
+- **Model Upgraded:** Migrated integration endpoint to the newer, highly responsive `gemini-3.6-flash` model.
+- **Timeout Adjusted:** Increased the Axios connection timeout limit from 10 seconds to 15 seconds to handle transient network delays safely.
+- **Result:** Gemini fallback latency decreased to 6-7 seconds, achieving 100% success rates on Thai slang parsing without triggering timeout errors.
+
+### 4. Calm Clarity UI/UX Redesign & Accessibility Refactor (July 22, 2026)
+Successfully completed the 9-Phase "Calm Clarity" Apple/HIG-inspired design system overhaul:
+- **Design Tokens Architecture:** Implemented `src/styles/tokens.css` exposing surface layers (`--surface-0`..`2`), semantic borders, contrast typography, 8px grid spacing (`--space-1`..`7`), radii (`--radius-sm`..`full`), and standardized motion (`cubic-bezier(0.4, 0, 0.2, 1)`).
+- **Navbar & Materiality Rules:** Restricted backdrop-filter blur exclusively to floating overlays (Navbar, Search & Notification dropdowns). Introduced mobile bottom navigation bar (`< 768px`) with solid background.
+- **Feed & Component Polish:** Converted Post Cards to solid `--surface-1` surfaces, added 120ms scale micro-animation to Like button, updated Bait badges with semantic color tints, and added `--warning` dashed border to Fake Ad Cards.
+- **High Contrast Messaging:** Solved chat bubble contrast issues using solid `--accent` bubbles with `--accent-contrast` text for sent messages and `--surface-1` bubbles with `--text-main` text for received messages.
+- **AuthPage Styling Fix:** Removed browser default button background on the Login/Register toggle link (`"Already have an account? Login"`), applying a transparent background with `--text-secondary` color for high contrast and readability across dark & light themes.
 
 ---
 

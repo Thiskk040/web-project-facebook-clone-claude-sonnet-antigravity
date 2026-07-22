@@ -4,8 +4,60 @@ import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle } from 'lucide-react';
+import Navbar from './Navbar';
 
 const baseUrl = 'http://localhost:3000';
+
+const fakeAds = [
+    {
+        id: 'ad-1',
+        title: "Nobody",
+        content: "Sponsored by: Nobody. This is just a reminder to drink water.",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-2',
+        title: "Your Future Self",
+        content: "Sponsored by: Your Future Self. Go to sleep before 1 AM tonight. Seriously, scrolling won't make you happier.",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-3',
+        title: "Office Worker Association",
+        content: "Ad · กด Skip ไม่ได้เพราะมันไม่ใช่โฆษณาจริง มันคือการเตือนให้ลุกไปยืดเส้นยืดสาย สูดหายใจเข้าลึกๆ 5 วินาที",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-4',
+        title: "Orthopedic Surgeon",
+        content: "Sponsored: ก้มหัวเล่นมือถือแบบนี้ หมอนรองกระดูกคอขอร้องไห้ กรุณาปรับระดับสายตาขึ้นมา 10 องศาด้วยครับ",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-5',
+        title: "Blink Warning System",
+        content: "Ad · ตาคุณแห้งแล้วนะจ๊ะ กรุณากะพริบตาถี่ๆ 5 ครั้ง หรือละสายตาไปมองต้นไม้สีเขียวนอกหน้าต่างสัก 10 วินาที",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-6',
+        title: "Your Bank Account",
+        content: "Sponsored: เงินในบัญชีเตือนว่า ไม่มีความจำเป็นต้องซื้อของชิ้นถ้าปในตะกร้าสินค้า ปิดแอปช็อปปิ้งแล้วไปนอนซะ",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-7',
+        title: "Social Media Detox Dept.",
+        content: "Ad · คุณไถฟีดมานานเกินไปแล้ว เพื่อสุขภาพจิตที่ดี ลองปิดหน้าจอนี้แล้วคุยกับคนข้างๆ หรือหมาแมวสักครู่",
+        badge: "Sponsored (ล้อเลียน)"
+    },
+    {
+        id: 'ad-8',
+        title: "The Air Quality Monitor",
+        content: "Sponsored by: The Universe. Take a deep breath. Exhale. You are doing fine. Now go get some actual oxygen.",
+        badge: "Sponsored (ล้อเลียน)"
+    }
+];
 
 export default function FeedPage() {
     const { token, user, logout } = useAuth();
@@ -13,60 +65,48 @@ export default function FeedPage() {
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
     const [toast, setToast] = useState('');
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
     
     // New Feature States
-    const [notifications, setNotifications] = useState([]);
-    const [showNotifications, setShowNotifications] = useState(false);
     const [suggestedUsers, setSuggestedUsers] = useState([]);
     const [friendRequests, setFriendRequests] = useState([]);
-    const [openComments, setOpenComments] = useState({}); // { postId: boolean }
-    const [postComments, setPostComments] = useState({}); // { postId: [] }
-    const [commentInputs, setCommentInputs] = useState({}); // { postId: '' }
-
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState([]);
-    const [isSearching, setIsSearching] = useState(false);
+    const [openComments, setOpenComments] = useState({});
+    const [postComments, setPostComments] = useState({});
+    const [commentInputs, setCommentInputs] = useState({});
+    const [animatingLikes, setAnimatingLikes] = useState({});
     
     // Mention State
     const [mentionQuery, setMentionQuery] = useState(null);
     const [mentionResults, setMentionResults] = useState([]);
     const [mentionCursorPos, setMentionCursorPos] = useState(0);
 
+    const [showBaitBadge, setShowBaitBadge] = useState(localStorage.getItem('showBaitBadge') !== 'false');
+    const [activeRoast, setActiveRoast] = useState(null);
+
     const socketRef = useRef(null);
     const fileInputRef = useRef(null);
 
+    // Sync showBaitBadge status from Navbar events
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
+        const handleBadgeChange = () => {
+            setShowBaitBadge(localStorage.getItem('showBaitBadge') !== 'false');
+        };
+        window.addEventListener('showBaitBadgeChange', handleBadgeChange);
+        return () => window.removeEventListener('showBaitBadgeChange', handleBadgeChange);
+    }, []);
 
     useEffect(() => {
         // Fetch Initial Data
         const fetchData = async () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${token}` } };
-                const [postsRes, suggestedRes, requestsRes, notifsRes] = await Promise.all([
+                const [postsRes, suggestedRes, requestsRes] = await Promise.all([
                     axios.get(`${baseUrl}/posts`, config),
                     axios.get(`${baseUrl}/users/suggested`, config),
-                    axios.get(`${baseUrl}/friend-requests/pending`, config),
-                    axios.get(`${baseUrl}/notifications`, config)
+                    axios.get(`${baseUrl}/friend-requests/pending`, config)
                 ]);
                 setPosts(postsRes.data);
                 setSuggestedUsers(suggestedRes.data);
                 setFriendRequests(requestsRes.data);
-                
-                const mappedNotifs = notifsRes.data.map(n => {
-                    let msg = '';
-                    if (n.type === 'like') msg = `${n.actor_username} liked your post.`;
-                    else if (n.type === 'comment') msg = `${n.actor_username} commented on your post.`;
-                    else if (n.type === 'friend_request') msg = `New friend request from ${n.actor_username}!`;
-                    else if (n.type === 'friend_accept') msg = `${n.actor_username} accepted your friend request.`;
-                    else if (n.type === 'new_post') msg = `${n.actor_username} created a new post.`;
-                    else if (n.type === 'tag') msg = `${n.actor_username} tagged you in a post.`;
-                    return { id: n.id, msg, is_read: n.is_read, time: new Date(n.created_at) };
-                });
-                setNotifications(mappedNotifs);
             } catch (err) {
                 console.error(err);
             }
@@ -83,9 +123,6 @@ export default function FeedPage() {
 
         socket.on('new_interaction', (data) => {
             setPosts(prev => prev.map(p => p.id === data.post_id ? { ...p, like_count: p.like_count + 1 } : p));
-            if(data.user_id !== user.id) {
-                addNotification(`${data.username} liked a post.`);
-            }
         });
 
         socket.on('new_comment', (data) => {
@@ -94,9 +131,6 @@ export default function FeedPage() {
                 if (!prev[data.post_id]) return prev;
                 return { ...prev, [data.post_id]: [...prev[data.post_id], data] };
             });
-            if(data.user_id !== user.id) {
-                addNotification(`${data.username} commented on a post.`);
-            }
         });
 
         socket.on('post_deleted', (data) => {
@@ -104,7 +138,6 @@ export default function FeedPage() {
         });
 
         socket.on(`friend_request_${user.id}`, (data) => {
-            addNotification(`New friend request from ${data.requester_username}!`);
             setFriendRequests(prev => [...prev, { id: data.requester_id, username: data.requester_username, created_at: new Date() }]);
         });
 
@@ -116,40 +149,9 @@ export default function FeedPage() {
         return () => socket.disconnect();
     }, [token, user, logout]);
 
-    useEffect(() => {
-        const delayDebounce = setTimeout(async () => {
-            if (searchQuery.trim()) {
-                try {
-                    setIsSearching(true);
-                    const res = await axios.get(`${baseUrl}/users/search?q=${searchQuery}`, { headers: { Authorization: `Bearer ${token}` } });
-                    setSearchResults(res.data);
-                } catch(e) { console.error(e); }
-                finally { setIsSearching(false); }
-            } else {
-                setSearchResults([]);
-            }
-        }, 300);
-        return () => clearTimeout(delayDebounce);
-    }, [searchQuery, token]);
-
     const showToast = (msg) => {
         setToast(msg);
         setTimeout(() => setToast(''), 3000);
-    };
-
-    const addNotification = (msg) => {
-        setNotifications(prev => [{ id: Date.now(), msg, is_read: 0, time: new Date() }, ...prev]);
-        showToast(msg);
-    };
-
-    const markNotificationAsRead = async (id) => {
-        try {
-            await axios.put(`${baseUrl}/notifications/${id}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
-        } catch (err) {
-            // Ignore if fake ID from socket
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
-        }
     };
 
     const handleContentChange = async (e) => {
@@ -208,6 +210,9 @@ export default function FeedPage() {
     };
 
     const handleLike = async (post) => {
+        setAnimatingLikes(prev => ({ ...prev, [post.id]: true }));
+        setTimeout(() => setAnimatingLikes(prev => ({ ...prev, [post.id]: false })), 200);
+
         try {
             if (post.has_liked) {
                 await axios.delete(`${baseUrl}/interactions/${post.id}/like`, { headers: { Authorization: `Bearer ${token}` } });
@@ -283,7 +288,7 @@ export default function FeedPage() {
         return parts.map((part, i) => {
             if (part.startsWith('@')) {
                 const username = part.substring(1);
-                return <Link key={i} to={`/profile/${username}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', fontWeight: 600 }}>{part}</Link>;
+                return <Link key={i} to={`/profile/${username}`} style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 'var(--font-semibold)' }}>{part}</Link>;
             }
             return <span key={i}>{part}</span>;
         });
@@ -291,211 +296,229 @@ export default function FeedPage() {
 
     return (
         <div>
-            <div className="glass navbar flex items-center justify-between" style={{ position: 'sticky', top: 0, zIndex: 100 }}>
-                <div className="flex items-center gap-4">
-                    <h2>CloneBook</h2>
-                    
-                    <div style={{ position: 'relative' }}>
-                        <input 
-                            type="text" 
-                            placeholder="Search friends..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{ padding: '8px 12px', borderRadius: '20px', border: '1px solid var(--glass-border)', background: 'var(--input-bg)' }}
-                        />
-                        {searchQuery && (
-                            <div className="glass" style={{ position: 'absolute', top: '100%', left: 0, width: '250px', marginTop: '8px', padding: '10px', borderRadius: '12px', zIndex: 101 }}>
-                                {isSearching ? <p style={{ fontSize: '0.8rem' }}>Searching...</p> : null}
-                                {!isSearching && searchResults.length === 0 ? <p style={{ fontSize: '0.8rem' }}>No users found.</p> : null}
-                                {searchResults.map(u => (
-                                    <div key={u.id} className="flex items-center justify-between" style={{ padding: '8px 0', borderBottom: '1px solid var(--glass-border)' }}>
-                                        <span style={{ fontWeight: 500 }}>{u.username}</span>
-                                        <button 
-                                            disabled={u.friend_status === 'accepted' || u.friend_status === 'pending'} 
-                                            onClick={() => { handleAddFriend(u.id); setSearchQuery(''); }} 
-                                            className="btn-primary" 
-                                            style={{ padding: '4px 8px', fontSize: '0.7rem', opacity: (u.friend_status ? 0.5 : 1) }}
-                                        >
-                                            {u.friend_status === 'accepted' ? 'Friends' : u.friend_status === 'pending' ? 'Pending' : 'Add'}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')} className="btn-icon">
-                        {theme === 'light' ? '🌙' : '☀️'}
-                    </button>
-                    
-                    <Link to="/messages" className="btn-icon" style={{color: 'var(--text-color)'}}>
-                        <MessageCircle size={20}/>
-                    </Link>
-                    
-                    <div style={{ position: 'relative' }}>
-                        <button onClick={() => setShowNotifications(!showNotifications)} className="btn-icon">
-                            <Bell size={20}/>
-                            {notifications.filter(n => !n.is_read).length > 0 && <span style={{ position: 'absolute', top: 0, right: 0, background: 'red', width: 10, height: 10, borderRadius: '50%' }}></span>}
-                        </button>
-                        {showNotifications && (
-                            <div className="glass" style={{ position: 'absolute', right: 0, top: '40px', width: '300px', padding: '10px', borderRadius: '12px', maxHeight: '400px', overflowY: 'auto' }}>
-                                <h4>Notifications</h4>
-                                {notifications.length === 0 ? <p style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>No new notifications</p> : null}
-                                {notifications.map(n => (
-                                    <div 
-                                        key={n.id} 
-                                        onClick={() => markNotificationAsRead(n.id)}
-                                        style={{ 
-                                            padding: '8px', 
-                                            borderBottom: '1px solid var(--glass-border)', 
-                                            fontSize: '0.9rem',
-                                            cursor: 'pointer',
-                                            fontWeight: n.is_read ? 'normal' : 'bold',
-                                            opacity: n.is_read ? 0.7 : 1
-                                        }}
-                                    >
-                                        {n.msg}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    
-                    <Link to={`/profile/${user?.username}`} style={{ fontWeight: 600, color: 'var(--text-color)', textDecoration: 'none' }}>{user?.username}</Link>
-                    <button onClick={logout} className="btn-icon" title="Logout"><LogOut size={20}/></button>
-                </div>
-            </div>
+            <Navbar />
 
             <div className="container flex gap-4" style={{ maxWidth: '1000px', alignItems: 'flex-start' }}>
                 {/* Main Feed Column */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <form className="glass post-card flex-col gap-4" onSubmit={handlePost} style={{ position: 'relative' }}>
+                    {/* Create Post Form */}
+                    <form className="glass post-card flex-col gap-4" onSubmit={handlePost} style={{ position: 'relative', marginBottom: 'var(--space-5)' }}>
                         <textarea 
                             placeholder={`What's on your mind, ${user?.username}?`}
                             rows={3} value={content} onChange={handleContentChange}
-                            style={{ background: 'transparent', border: 'none', boxShadow: 'none', width: '100%', outline: 'none', resize: 'none' }}
+                            style={{ background: 'transparent', border: 'none', boxShadow: 'none', width: '100%', outline: 'none', resize: 'none', fontSize: 'var(--text-base)', color: 'var(--text-main)' }}
                         />
                         
                         {mentionQuery !== null && (
-                            <div className="glass" style={{ position: 'absolute', top: '100%', left: '20px', width: '250px', zIndex: 10, padding: '10px', borderRadius: '12px' }}>
-                                {mentionResults.length === 0 ? <p style={{ fontSize: '0.8rem' }}>No users found.</p> : null}
+                            <div className="floating-material" style={{ position: 'absolute', top: '100%', left: '20px', width: '250px', zIndex: 10, padding: '10px' }}>
+                                {mentionResults.length === 0 ? <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>No users found.</p> : null}
                                 {mentionResults.map(u => (
-                                    <div key={u.id} onClick={() => handleSelectMention(u.username)} style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--glass-border)' }}>
+                                    <div key={u.id} onClick={() => handleSelectMention(u.username)} style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', fontSize: 'var(--text-sm)', color: 'var(--text-main)' }}>
                                         {u.username}
                                     </div>
                                 ))}
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
+                        <div className="flex items-center justify-between" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-3)' }}>
                             <div className="flex items-center gap-2">
-                                <label className="btn-icon" style={{ cursor: 'pointer' }}>
+                                <label className="btn-icon" style={{ cursor: 'pointer', minWidth: 40, minHeight: 40 }}>
                                     <Image size={20}/>
                                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setImage(e.target.files[0])} ref={fileInputRef} />
                                 </label>
-                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{image ? image.name : ''}</span>
+                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{image ? image.name : ''}</span>
                             </div>
                             <button type="submit" className="btn-primary" disabled={!content && !image}>
-                                <Send size={18}/> Post
+                                <Send size={16}/> Post
                             </button>
                         </div>
                     </form>
 
-                    {posts.map(post => (
-                        <div key={post.id} className="glass post-card">
-                            <div className="post-header justify-between">
-                                <div className="flex items-center gap-2">
-                                    {post.profile_picture ? (
-                                        <img src={post.profile_picture.startsWith('http') ? post.profile_picture : `${baseUrl}${post.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} />
-                                    ) : (
-                                        <div className="avatar">{post.username[0].toUpperCase()}</div>
-                                    )}
-                                    <div>
-                                        <Link to={`/profile/${post.username}`} style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-color)', textDecoration: 'none' }}>{post.username}</Link>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(post.created_at).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                {post.user_id === user.id && (
-                                    <button onClick={() => handleDeletePost(post.id)} className="btn-icon" style={{color: '#ef4444'}}><Trash2 size={18}/></button>
-                                )}
-                            </div>
-                            
-                            <p style={{ marginBottom: '12px', whiteSpace: 'pre-wrap' }}>{renderPostContent(post.content)}</p>
-                            {post.image_url && <img src={`${baseUrl}${post.image_url}`} alt="Post" className="post-img" />}
-                            
-                            <div className="flex items-center justify-between" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '12px' }}>
-                                <span>{post.like_count || 0} Likes</span>
-                                <span>{post.comment_count || 0} Comments</span>
-                            </div>
+                    {/* Posts List */}
+                    {posts.map((post, index) => {
+                        const showAdAfter = (index + 1) % 9 === 0;
+                        const adIndex = Math.floor(index / 9) % fakeAds.length;
+                        const ad = fakeAds[adIndex];
 
-                            <div className="interactions flex justify-between" style={{ marginTop: '8px', paddingTop: '8px' }}>
-                                <button className="interaction-btn flex items-center gap-2" onClick={() => handleLike(post)} style={{flex: 1, justifyContent: 'center', color: post.has_liked ? 'var(--primary-color)' : 'inherit'}}>
-                                    <Heart size={18} fill={post.has_liked ? 'var(--primary-color)' : 'none'} /> {post.has_liked ? 'Liked' : 'Like'}
-                                </button>
-                                <button className="interaction-btn flex items-center gap-2" onClick={() => toggleComments(post.id)} style={{flex: 1, justifyContent: 'center'}}>
-                                    <MessageSquare size={18} /> Comment
-                                </button>
-                            </div>
+                        const baitBg = post.bait_score > 70 ? 'rgba(220, 38, 38, 0.15)' : post.bait_score > 30 ? 'rgba(217, 119, 6, 0.15)' : 'rgba(22, 163, 74, 0.15)';
+                        const baitColor = post.bait_score > 70 ? 'var(--danger)' : post.bait_score > 30 ? 'var(--warning)' : 'var(--success)';
 
-                            {/* Comments Section */}
-                            {openComments[post.id] && (
-                                <div style={{ marginTop: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
-                                    <div className="flex gap-2" style={{ marginBottom: '16px' }}>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Write a comment..." 
-                                            value={commentInputs[post.id] || ''}
-                                            onChange={e => setCommentInputs(prev => ({...prev, [post.id]: e.target.value}))}
-                                            onKeyDown={e => e.key === 'Enter' && submitComment(post.id)}
-                                        />
-                                        <button onClick={() => submitComment(post.id)} className="btn-primary" style={{padding: '8px 16px'}}><Send size={16}/></button>
+                        return (
+                            <div key={post.id}>
+                                <div className="post-card">
+                                    <div className="post-header justify-between">
+                                        <div className="flex items-center gap-3">
+                                            {post.profile_picture ? (
+                                                <img src={post.profile_picture.startsWith('http') ? post.profile_picture : `${baseUrl}${post.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} />
+                                            ) : (
+                                                <div className="avatar">{(post.username || '?')[0].toUpperCase()}</div>
+                                            )}
+                                            <div>
+                                                <Link to={`/profile/${post.username}`} style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-semibold)', color: 'var(--text-main)', textDecoration: 'none' }}>{post.username}</Link>
+                                                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{new Date(post.created_at).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {showBaitBadge && post.bait_score > 0 && (
+                                                <span 
+                                                    className="bait-badge"
+                                                    title={`Click to analyze post: ${post.bait_translation}`} 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveRoast({
+                                                            content: post.content,
+                                                            score: post.bait_score,
+                                                            translation: post.bait_translation,
+                                                            roasts: post.bait_roasts
+                                                        });
+                                                    }}
+                                                    style={{
+                                                        fontSize: 'var(--text-xs)',
+                                                        padding: '4px 10px',
+                                                        borderRadius: 'var(--radius-full)',
+                                                        background: baitBg,
+                                                        color: baitColor,
+                                                        cursor: 'pointer',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        fontWeight: 'var(--font-semibold)'
+                                                    }}
+                                                >
+                                                    🎣 {post.bait_score}% Bait
+                                                </span>
+                                            )}
+                                            {post.user_id === user.id && (
+                                                <button onClick={() => handleDeletePost(post.id)} className="btn-icon" style={{color: 'var(--danger)', minWidth: 40, minHeight: 40}}><Trash2 size={18}/></button>
+                                            )}
+                                        </div>
                                     </div>
                                     
-                                    <div className="flex-col gap-4">
-                                        {(postComments[post.id] || []).map(comment => (
-                                            <div key={comment.id} className="flex gap-2">
-                                                <div className="avatar" style={{width: 30, height: 30, fontSize: '0.9rem'}}>{comment.username[0].toUpperCase()}</div>
-                                                <div className="glass flex items-center justify-between" style={{ padding: '8px 12px', borderRadius: '12px', flex: 1, background: 'var(--input-bg)' }}>
-                                                    <div>
-                                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', marginRight: '8px' }}>{comment.username}</span>
-                                                        <span style={{ fontSize: '0.9rem' }}>{comment.content}</span>
-                                                    </div>
-                                                    {comment.user_id === user.id && (
-                                                        <button onClick={() => handleDeleteComment(comment.id, post.id)} className="btn-icon" style={{color: '#ef4444', padding: '4px'}}><Trash2 size={14}/></button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <p style={{ marginBottom: 'var(--space-3)', whiteSpace: 'pre-wrap', lineHeight: 'var(--leading-thai)' }}>{renderPostContent(post.content)}</p>
+                                    {post.image_url && <img src={`${baseUrl}${post.image_url}`} alt="Post" className="post-img" />}
+                                    
+                                    <div className="flex items-center justify-between" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginTop: 'var(--space-3)' }}>
+                                        <span>{post.like_count || 0} Likes</span>
+                                        <span>{post.comment_count || 0} Comments</span>
                                     </div>
+
+                                    <div className="interactions flex justify-between" style={{ marginTop: 'var(--space-2)', paddingTop: 'var(--space-2)' }}>
+                                        <button 
+                                            className={`interaction-btn flex items-center gap-2 ${animatingLikes[post.id] ? 'like-anim' : ''}`} 
+                                            onClick={() => handleLike(post)} 
+                                            style={{flex: 1, justifyContent: 'center', color: post.has_liked ? 'var(--accent)' : 'var(--text-secondary)', minHeight: 40}}
+                                        >
+                                            <Heart size={18} fill={post.has_liked ? 'var(--accent)' : 'none'} /> {post.has_liked ? 'Liked' : 'Like'}
+                                        </button>
+                                        <button className="interaction-btn flex items-center gap-2" onClick={() => toggleComments(post.id)} style={{flex: 1, justifyContent: 'center', minHeight: 40}}>
+                                            <MessageSquare size={18} /> Comment
+                                        </button>
+                                    </div>
+
+                                    {/* Comments Section */}
+                                    {openComments[post.id] && (
+                                        <div style={{ marginTop: 'var(--space-4)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-4)' }}>
+                                            <div className="flex gap-2" style={{ marginBottom: 'var(--space-4)' }}>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Write a comment..." 
+                                                    value={commentInputs[post.id] || ''}
+                                                    onChange={e => setCommentInputs(prev => ({...prev, [post.id]: e.target.value}))}
+                                                    onKeyDown={e => e.key === 'Enter' && submitComment(post.id)}
+                                                />
+                                                <button onClick={() => submitComment(post.id)} className="btn-primary" style={{padding: '8px 16px'}}><Send size={16}/></button>
+                                            </div>
+                                            
+                                            <div className="flex-col gap-4">
+                                                {(postComments[post.id] || []).map(comment => (
+                                                    <div key={comment.id} className="flex gap-2">
+                                                        <div className="avatar" style={{width: 32, height: 32, fontSize: '0.8rem'}}>{(comment.username || '?')[0].toUpperCase()}</div>
+                                                        <div style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', flex: 1, background: 'var(--surface-0)', border: '1px solid var(--border-subtle)' }} className="flex items-center justify-between">
+                                                            <div>
+                                                                <span style={{ fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)', marginRight: '8px', color: 'var(--text-main)' }}>{comment.username}</span>
+                                                                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-main)' }}>{comment.content}</span>
+                                                            </div>
+                                                            {comment.user_id === user.id && (
+                                                                <button onClick={() => handleDeleteComment(comment.id, post.id)} className="btn-icon" style={{color: 'var(--danger)', padding: '4px', minWidth: 32, minHeight: 32}}><Trash2 size={14}/></button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))}
+
+                                {/* Unskippable Fake Ad Card */}
+                                {showAdAfter && (
+                                    <div 
+                                        className="post-card fake-ad-card" 
+                                        style={{ 
+                                            border: '1px dashed var(--warning)',
+                                            background: 'rgba(217, 119, 6, 0.05)',
+                                            position: 'relative',
+                                            padding: 'var(--space-5)',
+                                            borderRadius: 'var(--radius-md)',
+                                            marginBottom: 'var(--space-5)'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: 'var(--warning)' }}>
+                                                📢 โฆษณาเตือนใจ (Unskippable Wellness Warning)
+                                            </span>
+                                            <span style={{ fontSize: 'var(--text-xs)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(217, 119, 6, 0.15)', color: 'var(--warning)', fontWeight: 'var(--font-bold)' }}>
+                                                {ad.badge}
+                                            </span>
+                                        </div>
+                                        <h4 style={{ margin: '0 0 8px 0', fontSize: 'var(--text-md)', color: 'var(--text-main)' }}>{ad.title}</h4>
+                                        <p style={{ margin: 0, fontSize: 'var(--text-base)', lineHeight: 'var(--leading-thai)', color: 'var(--text-main)' }}>
+                                            {ad.content}
+                                        </p>
+                                        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                                            <button 
+                                                disabled 
+                                                style={{ 
+                                                    fontSize: 'var(--text-xs)', 
+                                                    padding: '4px 10px', 
+                                                    border: '1px solid var(--border-subtle)', 
+                                                    borderRadius: 'var(--radius-full)', 
+                                                    background: 'transparent',
+                                                    color: 'var(--text-tertiary)',
+                                                    cursor: 'not-allowed',
+                                                    minHeight: 32
+                                                }}
+                                            >
+                                                Skip Ad (Disabled)
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
 
-                {/* Sidebar */}
-                <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }} className="sidebar-hide-mobile">
+                {/* Sidebar Column */}
+                <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }} className="sidebar-hide-mobile">
                     {friendRequests.length > 0 && (
-                        <div className="glass post-card" style={{ padding: '16px' }}>
-                            <h4 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="post-card" style={{ padding: 'var(--space-4)' }}>
+                            <h4 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--text-base)' }}>
                                 <Users size={18}/> Friend Requests
                             </h4>
                             {friendRequests.map(req => (
                                 <div key={req.id} className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
-                                    <span style={{ fontWeight: 500 }}>{req.username}</span>
-                                    <button onClick={() => handleAcceptFriend(req.id)} className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}><Check size={14}/> Accept</button>
+                                    <span style={{ fontWeight: 'var(--font-medium)', fontSize: 'var(--text-sm)' }}>{req.username}</span>
+                                    <button onClick={() => handleAcceptFriend(req.id)} className="btn-primary" style={{ padding: '6px 12px', fontSize: 'var(--text-xs)' }}><Check size={14}/> Accept</button>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    <div className="glass post-card" style={{ padding: '16px' }}>
-                        <h4 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="post-card" style={{ padding: 'var(--space-4)' }}>
+                        <h4 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--text-base)' }}>
                             <UserPlus size={18}/> Suggested Friends
                         </h4>
-                        {suggestedUsers.length === 0 ? <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No suggestions right now.</p> : null}
+                        {suggestedUsers.length === 0 ? <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>No suggestions right now.</p> : null}
                         {suggestedUsers.map(u => (
                             <div key={u.id} className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
                                 <div className="flex items-center gap-2">
@@ -504,14 +527,100 @@ export default function FeedPage() {
                                     ) : (
                                         <div className="avatar" style={{width: 24, height: 24, fontSize:'0.7rem'}}>{u.username[0].toUpperCase()}</div>
                                     )}
-                                    <Link to={`/profile/${u.username}`} style={{ fontWeight: 500, color: 'var(--text-color)', textDecoration: 'none' }}>{u.username}</Link>
+                                    <Link to={`/profile/${u.username}`} style={{ fontWeight: 'var(--font-medium)', color: 'var(--text-main)', textDecoration: 'none', fontSize: 'var(--text-sm)' }}>{u.username}</Link>
                                 </div>
-                                <button onClick={() => handleAddFriend(u.id)} className="btn-icon"><UserPlus size={18}/></button>
+                                <button onClick={() => handleAddFriend(u.id)} className="btn-icon" style={{minWidth: 36, minHeight: 36}}><UserPlus size={18}/></button>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+            
+            {/* Roast Modal Window */}
+            {activeRoast && (
+                <div 
+                    onClick={() => setActiveRoast(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '20px'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            width: '100%',
+                            maxWidth: '480px',
+                            padding: 'var(--space-6)',
+                            borderRadius: 'var(--radius-lg)',
+                            border: '1px solid var(--border-subtle)',
+                            background: 'var(--surface-1)',
+                            boxShadow: 'var(--shadow-2)',
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px'
+                        }}
+                    >
+                        <div style={{ fontSize: '2.5rem' }}>🎣🔥</div>
+                        <h2 style={{ margin: 0, color: 'var(--danger)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                            วิเคราะห์จิตใต้สำนึกคนอวด (Bait Analysis)
+                        </h2>
+                        <div style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-bold)', color: 'var(--text-secondary)' }}>
+                            ความรุนแรงของกิเลส: <span style={{ color: 'var(--danger)' }}>{activeRoast.score}% Bait</span>
+                        </div>
+
+                        <div style={{ borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', textAlign: 'left' }}>
+                            <p style={{ margin: '0 0 8px 0', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 'var(--font-semibold)' }}>โพสต์ดั้งเดิม:</p>
+                            <blockquote style={{ margin: 0, paddingLeft: '12px', borderLeft: '3px solid var(--accent)', fontStyle: 'italic', color: 'var(--text-main)', fontSize: 'var(--text-base)' }}>
+                                "{activeRoast.content}"
+                            </blockquote>
+                        </div>
+
+                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--danger)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
+                            <p style={{ margin: 0, fontWeight: 'var(--font-bold)', fontSize: 'var(--text-base)', color: 'var(--text-main)' }}>
+                                {activeRoast.translation}
+                            </p>
+                        </div>
+
+                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(220, 38, 38, 0.08)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--danger)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--danger)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
+                                {activeRoast.roasts || "คนปกติเขาอ่านแล้วไม่มีอะไรเลย นอกจากความว่างเปล่าและความคิดในหัวของคุณ"}
+                            </p>
+                        </div>
+
+                        <button 
+                            onClick={() => setActiveRoast(null)}
+                            className="btn-primary" 
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: 'var(--radius-md)',
+                                background: 'var(--danger)',
+                                color: '#ffffff',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 'var(--font-bold)',
+                                marginTop: '8px',
+                                fontSize: 'var(--text-sm)'
+                            }}
+                        >
+                            ยอมรับความจริงแล้วปิดหน้าต่างนี้ (Accept Reality)
+                        </button>
+                    </div>
+                </div>
+            )}
             
             {toast && <div className="toast">{toast}</div>}
         </div>
