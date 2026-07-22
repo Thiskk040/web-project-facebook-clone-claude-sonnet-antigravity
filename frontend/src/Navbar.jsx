@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { Bell, MessageCircle, LogOut, Search, Sun, Moon, Home, User, Check } from 'lucide-react';
+import { Bell, MessageCircle, LogOut, Search, Sun, Moon, Home, User, Check, CheckCircle, CheckCircle2, Fish, EyeOff } from 'lucide-react';
 
 const baseUrl = 'http://localhost:3000';
 
@@ -163,7 +163,7 @@ export default function Navbar() {
         setShowBaitBadge(newVal);
         localStorage.setItem('showBaitBadge', String(newVal));
         window.dispatchEvent(new Event('showBaitBadgeChange'));
-        showToastMessage(newVal ? 'Bait badges visible 🎣' : 'Bait badges hidden 🚫');
+        showToastMessage(newVal ? 'Bait badges visible' : 'Bait badges hidden');
     };
 
     const toggleTheme = () => {
@@ -243,10 +243,10 @@ export default function Navbar() {
                     <button
                         onClick={toggleBaitBadge}
                         className="btn-icon"
-                        title={showBaitBadge ? "Hide Bait Badge 🎣" : "Show Bait Badge 🎣"}
+                        title={showBaitBadge ? "Hide Bait Badge" : "Show Bait Badge"}
                         style={{ minWidth: 40, minHeight: 40 }}
                     >
-                        {showBaitBadge ? '🎣' : '🚫'}
+                        {showBaitBadge ? <Fish size={18} /> : <EyeOff size={18} />}
                     </button>
 
                     {/* Theme Toggle */}
@@ -264,7 +264,7 @@ export default function Navbar() {
                         <button onClick={() => setShowNotifications(!showNotifications)} className="btn-icon" title="Notifications" style={{ minWidth: 40, minHeight: 40 }}>
                             <Bell size={20} />
                             {unreadNotificationsCount > 0 && (
-                                <span style={{ position: 'absolute', top: 4, right: 4, background: 'var(--danger)', width: 14, height: 14, borderRadius: '50%', color: '#fff', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                                <span className="notif-badge-anim" style={{ position: 'absolute', top: 4, right: 4, background: 'var(--danger)', width: 14, height: 14, borderRadius: '50%', color: '#fff', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                                     {unreadNotificationsCount}
                                 </span>
                             )}
@@ -328,7 +328,7 @@ export default function Navbar() {
                 <button onClick={() => setShowNotifications(!showNotifications)} style={{ color: 'var(--text-secondary)', background: 'transparent', position: 'relative' }} title="Notifications">
                     <Bell size={22} />
                     {unreadNotificationsCount > 0 && (
-                        <span style={{ position: 'absolute', top: 4, right: 12, background: 'var(--danger)', width: 10, height: 10, borderRadius: '50%' }} />
+                        <span className="notif-badge-anim" style={{ position: 'absolute', top: 4, right: 12, background: 'var(--danger)', width: 10, height: 10, borderRadius: '50%' }} />
                     )}
                 </button>
                 <Link to={`/profile/${user?.username}`} style={{ color: location.pathname.startsWith('/profile') ? 'var(--accent)' : 'var(--text-secondary)' }} title="Profile">
@@ -336,7 +336,7 @@ export default function Navbar() {
                 </Link>
             </div>
 
-            {toast && <div className="toast" style={{ zIndex: 1000 }}>{toast}</div>}
+            {toast && <div className="toast" style={{ zIndex: 1000 }}><CheckCircle size={16} style={{ color: 'var(--accent)' }} /> <span>{toast}</span></div>}
         </>
     );
 }

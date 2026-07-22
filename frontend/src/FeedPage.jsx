@@ -3,8 +3,9 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle } from 'lucide-react';
+import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle, Fish, Megaphone } from 'lucide-react';
 import Navbar from './Navbar';
+import { getAvatarGradient } from './utils/avatarGradient';
 
 const baseUrl = 'http://localhost:3000';
 
@@ -351,7 +352,7 @@ export default function FeedPage() {
                                             {post.profile_picture ? (
                                                 <img src={post.profile_picture.startsWith('http') ? post.profile_picture : `${baseUrl}${post.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} />
                                             ) : (
-                                                <div className="avatar">{(post.username || '?')[0].toUpperCase()}</div>
+                                                <div className="avatar" style={{ background: getAvatarGradient(post.username) }}>{(post.username || '?')[0].toUpperCase()}</div>
                                             )}
                                             <div>
                                                 <Link to={`/profile/${post.username}`} style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-semibold)', color: 'var(--text-main)', textDecoration: 'none' }}>{post.username}</Link>
@@ -385,7 +386,7 @@ export default function FeedPage() {
                                                         fontWeight: 'var(--font-semibold)'
                                                     }}
                                                 >
-                                                    🎣 {post.bait_score}% Bait
+                                                    <Fish size={14} /> {post.bait_score}% Bait
                                                 </span>
                                             )}
                                             {post.user_id === user.id && (
@@ -463,8 +464,8 @@ export default function FeedPage() {
                                         }}
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: 'var(--warning)' }}>
-                                                📢 โฆษณาเตือนใจ (Unskippable Wellness Warning)
+                                            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: 'var(--warning)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                <Megaphone size={14} /> โฆษณาเตือนใจ (Unskippable Wellness Warning)
                                             </span>
                                             <span style={{ fontSize: 'var(--text-xs)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(217, 119, 6, 0.15)', color: 'var(--warning)', fontWeight: 'var(--font-bold)' }}>
                                                 {ad.badge}
@@ -571,7 +572,9 @@ export default function FeedPage() {
                             gap: '16px'
                         }}
                     >
-                        <div style={{ fontSize: '2.5rem' }}>🎣🔥</div>
+                        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(220, 38, 38, 0.12)', color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                            <Fish size={32} />
+                        </div>
                         <h2 style={{ margin: 0, color: 'var(--danger)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                             วิเคราะห์จิตใต้สำนึกคนอวด (Bait Analysis)
                         </h2>

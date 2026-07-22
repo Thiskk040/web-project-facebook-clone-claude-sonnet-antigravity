@@ -123,6 +123,16 @@ Successfully completed the 9-Phase "Calm Clarity" Apple/HIG-inspired design syst
 - **High Contrast Messaging:** Solved chat bubble contrast issues using solid `--accent` bubbles with `--accent-contrast` text for sent messages and `--surface-1` bubbles with `--text-main` text for received messages.
 - **AuthPage Styling Fix:** Removed browser default button background on the Login/Register toggle link (`"Already have an account? Login"`), applying a transparent background with `--text-secondary` color for high contrast and readability across dark & light themes.
 
+### 5. Icon System & Visual Polish Overhaul (July 22, 2026)
+Completed a comprehensive visual polish pass replacing all inline emojis with scalable `lucide-react` icons and enhancing layout depth:
+- **Zero Emoji Mandate:** Replaced all 13 inline emojis across `FeedPage.jsx`, `ProfilePage.jsx`, `Navbar.jsx`, and `MessagesPage.jsx` with `<Fish />`, `<Megaphone />`, `<Ghost />`, `<EyeOff />`, and `<CheckCircle2 />` icons. Verified 0 unicode emojis remain in `frontend/src`.
+- **Chat Bubble Contrast Fix:** Fixed received message bubbles in `MessagesPage.jsx` to use solid `var(--surface-1)` background instead of blending into the `var(--surface-0)` page background.
+- **Global Radial Background Mesh:** Added subtle radial gradient mesh (`radial-gradient(ellipse at top, rgba(24, 119, 242, 0.04), transparent 60%), var(--surface-0)`) to `body` in `index.css`.
+- **Split-Screen Auth Page:** Transformed `AuthPage.jsx` on desktop ($\ge 1024\text{px}$) into an Apple/HIG split-screen layout featuring a gradient branding panel on the left and a high-contrast form container on the right.
+- **Dynamic Avatar Gradients & Skeleton Loader:** Created `src/utils/avatarGradient.js` generating 5 hash-based gradient palettes for user avatars, and implemented CSS shimmer skeleton loading states (`.skeleton`).
+- **Avatar Spacing & Gap Utilities Fix:** Added complete `.gap-1` through `.gap-7` utility classes in `index.css` and `flex-shrink: 0` on avatar elements, ensuring a clean 12px (`var(--space-3)`) separation between profile pictures and usernames across `MessagesPage.jsx`, `Navbar.jsx`, `FeedPage.jsx`, and `ProfilePage.jsx`.
+- **Centered Messages Empty State:** Redesigned the unselected chat container in `MessagesPage.jsx` into a centered, visually engaging empty state card with a circular `<MessageSquare />` icon badge and clean typography.
+
 ---
 
 

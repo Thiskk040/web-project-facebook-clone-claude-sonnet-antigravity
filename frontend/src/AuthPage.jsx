@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
@@ -22,37 +22,69 @@ export default function AuthPage() {
 
     return (
         <div className="auth-container">
-            <div className="glass auth-box">
-                <h1 style={{ marginBottom: '10px' }}>{isLogin ? 'Welcome Back' : 'Join Us'}</h1>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>Complete Facebook Clone</p>
-                
-                {error && <div style={{ color: '#ef4444', marginBottom: '20px', fontWeight: '500' }}>{error}</div>}
+            <div className="auth-split-wrapper">
+                {/* Branding Panel (Desktop) */}
+                <div className="auth-branding-panel">
+                    <div>
+                        <h1 style={{ fontSize: 'var(--text-xl)', color: '#ffffff', marginBottom: 'var(--space-2)' }}>CloneBook</h1>
+                        <p style={{ fontSize: 'var(--text-md)', opacity: 0.9, color: '#ffffff', lineHeight: 'var(--leading-normal)' }}>
+                            Connect with friends and the world around you in a simple, fast experience.
+                        </p>
+                    </div>
 
-                <form onSubmit={handleSubmit} className="flex-col gap-4">
-                    <input type="text" placeholder="Username" required value={username} onChange={e => setUsername(e.target.value)} />
-                    <input type="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} />
-                    <button type="submit" className="btn-primary" style={{ marginTop: '10px', width: '100%' }}>
-                        {isLogin ? <><LogIn size={20}/> Login</> : <><UserPlus size={20}/> Register</>}
-                    </button>
-                </form>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 size={20} style={{ opacity: 0.9 }} />
+                            <span style={{ fontSize: 'var(--text-base)' }}>Real-time messaging & instant updates</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <ShieldCheck size={20} style={{ opacity: 0.9 }} />
+                            <span style={{ fontSize: 'var(--text-base)' }}>Hybrid engagement bait detector</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Zap size={20} style={{ opacity: 0.9 }} />
+                            <span style={{ fontSize: 'var(--text-base)' }}>Clean, responsive HIG design</span>
+                        </div>
+                    </div>
+                </div>
 
-                <div style={{ marginTop: '24px' }}>
-                    <button 
-                        type="button"
-                        onClick={() => setIsLogin(!isLogin)} 
-                        style={{ 
-                            background: 'transparent', 
-                            color: 'var(--text-secondary)', 
-                            fontSize: 'var(--text-sm)',
-                            fontWeight: 'var(--font-medium)',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '8px 16px',
-                            borderRadius: 'var(--radius-sm)'
-                        }}
-                    >
-                        {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
-                    </button>
+                {/* Form Panel */}
+                <div className="auth-form-panel">
+                    <h2 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-1)', color: 'var(--text-main)' }}>
+                        {isLogin ? 'Welcome Back' : 'Join Us'}
+                    </h2>
+                    <p style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--space-5)', fontSize: 'var(--text-sm)' }}>
+                        {isLogin ? 'Enter your credentials to access your account' : 'Create an account to get started'}
+                    </p>
+                    
+                    {error && <div style={{ color: 'var(--danger)', marginBottom: 'var(--space-4)', fontWeight: 'var(--font-medium)', fontSize: 'var(--text-sm)' }}>{error}</div>}
+
+                    <form onSubmit={handleSubmit} className="flex-col gap-4">
+                        <input type="text" placeholder="Username" required value={username} onChange={e => setUsername(e.target.value)} />
+                        <input type="password" placeholder="Password" required value={password} onChange={e => setPassword(e.target.value)} />
+                        <button type="submit" className="btn-primary" style={{ marginTop: 'var(--space-2)', width: '100%' }}>
+                            {isLogin ? <><LogIn size={18}/> Login</> : <><UserPlus size={18}/> Register</>}
+                        </button>
+                    </form>
+
+                    <div style={{ marginTop: 'var(--space-5)', textAlign: 'center' }}>
+                        <button 
+                            type="button"
+                            onClick={() => setIsLogin(!isLogin)} 
+                            style={{ 
+                                background: 'transparent', 
+                                color: 'var(--text-secondary)', 
+                                fontSize: 'var(--text-sm)',
+                                fontWeight: 'var(--font-medium)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '8px 16px',
+                                borderRadius: 'var(--radius-sm)'
+                            }}
+                        >
+                            {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

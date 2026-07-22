@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 import { io } from 'socket.io-client';
-import { ArrowLeft, Send, Search, Ghost } from 'lucide-react';
+import { ArrowLeft, Send, Search, Ghost, MessageSquare } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from './Navbar';
 
@@ -130,8 +130,8 @@ export default function MessagesPage() {
                         {searchQuery && (
                             <div style={{ marginTop: 'var(--space-2)', background: 'var(--surface-1)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
                                 {searchResults.map(u => (
-                                    <div key={u.id} onClick={() => selectConversation(u)} style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)' }} className="flex items-center gap-2">
-                                        {u.profile_picture ? <img src={u.profile_picture.startsWith('http') ? u.profile_picture : `${baseUrl}${u.profile_picture}`} alt="" className="avatar" style={{width: 32, height: 32, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 32, height: 32, fontSize: '0.8rem'}}>{(u.username || '?')[0].toUpperCase()}</div>}
+                                    <div key={u.id} onClick={() => selectConversation(u)} style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', gap: 'var(--space-3)' }} className="flex items-center">
+                                        {u.profile_picture ? <img src={u.profile_picture.startsWith('http') ? u.profile_picture : `${baseUrl}${u.profile_picture}`} alt="" className="avatar" style={{width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0}} /> : <div className="avatar" style={{width: 32, height: 32, fontSize: '0.8rem', flexShrink: 0}}>{(u.username || '?')[0].toUpperCase()}</div>}
                                         <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-main)' }}>{u.username}</span>
                                     </div>
                                 ))}
@@ -149,11 +149,12 @@ export default function MessagesPage() {
                                     borderBottom: '1px solid var(--border-subtle)', 
                                     cursor: 'pointer',
                                     background: activeUser?.id === c.id ? 'var(--surface-1)' : 'transparent',
-                                    fontWeight: (!c.is_read && c.sender_id !== user.id) ? 'var(--font-bold)' : 'var(--font-regular)'
+                                    fontWeight: (!c.is_read && c.sender_id !== user.id) ? 'var(--font-bold)' : 'var(--font-regular)',
+                                    gap: 'var(--space-3)'
                                 }} 
-                                className="flex items-center gap-3"
+                                className="flex items-center"
                             >
-                                {c.profile_picture ? <img src={c.profile_picture.startsWith('http') ? c.profile_picture : `${baseUrl}${c.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 40, height: 40}}>{(c.username || '?')[0].toUpperCase()}</div>}
+                                {c.profile_picture ? <img src={c.profile_picture.startsWith('http') ? c.profile_picture : `${baseUrl}${c.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0}} /> : <div className="avatar" style={{width: 40, height: 40, flexShrink: 0}}>{(c.username || '?')[0].toUpperCase()}</div>}
                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <span style={{ fontSize: 'var(--text-base)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-main)' }}>{c.username}</span>
@@ -171,8 +172,8 @@ export default function MessagesPage() {
                 <div style={{ flex: 1, borderRadius: 'var(--radius-md)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                     {activeUser ? (
                         <>
-                            <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-0)' }} className="flex items-center gap-3">
-                                {activeUser.profile_picture ? <img src={activeUser.profile_picture.startsWith('http') ? activeUser.profile_picture : `${baseUrl}${activeUser.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover'}} /> : <div className="avatar" style={{width: 40, height: 40}}>{(activeUser.username || '?')[0].toUpperCase()}</div>}
+                            <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-0)', gap: 'var(--space-3)' }} className="flex items-center">
+                                {activeUser.profile_picture ? <img src={activeUser.profile_picture.startsWith('http') ? activeUser.profile_picture : `${baseUrl}${activeUser.profile_picture}`} alt="" className="avatar" style={{width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0}} /> : <div className="avatar" style={{width: 40, height: 40, flexShrink: 0}}>{(activeUser.username || '?')[0].toUpperCase()}</div>}
                                 <h3 style={{ margin: 0, fontSize: 'var(--text-md)', color: 'var(--text-main)' }}>{activeUser.username}</h3>
                             </div>
                             
@@ -200,17 +201,17 @@ export default function MessagesPage() {
                                                 <Ghost 
                                                     size={18} 
                                                     style={{ 
-                                                        color: 'var(--text-tertiary)', 
-                                                        opacity: 0.6, 
+                                                        color: 'var(--danger)', 
+                                                        opacity: 0.7, 
                                                         animation: 'pulse 2s infinite' 
                                                     }} 
-                                                    title={`โดนดองแชทมา ${Math.floor(m.hours_since_seen)} ชั่วโมงแล้ว 👻`}
+                                                    title={`Unanswered for ${Math.floor(m.hours_since_seen)} hours`}
                                                 />
                                             )}
                                             
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                 <div style={{ 
-                                                    background: isMe ? 'var(--accent)' : 'var(--surface-0)', 
+                                                    background: isMe ? 'var(--accent)' : 'var(--surface-1)', 
                                                     color: isMe ? 'var(--accent-contrast)' : 'var(--text-main)',
                                                     padding: '10px 14px', 
                                                     borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
@@ -236,8 +237,8 @@ export default function MessagesPage() {
                                                         {isMe && (
                                                             m.is_read === 1 ? (
                                                                 m.hours_since_seen >= 24 ? (
-                                                                    <span style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
-                                                                        · Seen {Math.floor(m.hours_since_seen / 24)} วันที่แล้ว 👻
+                                                                    <span style={{ color: 'var(--danger)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                                                        · <Ghost size={12} /> Seen {Math.floor(m.hours_since_seen / 24)} days ago
                                                                     </span>
                                                                 ) : (
                                                                     <span style={{ color: 'var(--accent)' }}> · Seen</span>
@@ -269,8 +270,16 @@ export default function MessagesPage() {
                             </form>
                         </>
                     ) : (
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontSize: 'var(--text-base)' }}>
-                            Select a conversation or search for a friend to start messaging.
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6)', textAlign: 'center', gap: 'var(--space-3)' }}>
+                            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(24, 119, 242, 0.1)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--space-2)' }}>
+                                <MessageSquare size={32} />
+                            </div>
+                            <h3 style={{ margin: 0, fontSize: 'var(--text-lg)', color: 'var(--text-main)', fontWeight: 'var(--font-semibold)' }}>
+                                Your Messages
+                            </h3>
+                            <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)', maxWidth: '320px', lineHeight: 'var(--leading-normal)' }}>
+                                Select a conversation from the left sidebar or search for a friend to start messaging.
+                            </p>
                         </div>
                     )}
                 </div>

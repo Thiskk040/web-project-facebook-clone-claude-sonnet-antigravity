@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { Image, Save, ArrowLeft, Heart, MessageSquare, UserMinus, Users, MessageCircle } from 'lucide-react';
+import { Image, Save, ArrowLeft, Heart, MessageSquare, UserMinus, Users, MessageCircle, Fish, Inbox } from 'lucide-react';
 import Navbar from './Navbar';
 
 const baseUrl = 'http://localhost:3000';
@@ -97,7 +97,25 @@ export default function ProfilePage() {
 
     const displayPosts = activeTab === 'posts' ? posts : taggedPosts;
 
-    if (!profile) return <div className="container" style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--text-secondary)' }}>Loading profile...</div>;
+    if (!profile) return (
+        <div>
+            <Navbar />
+            <div className="container" style={{ maxWidth: '800px' }}>
+                <div className="post-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 'var(--space-5)' }}>
+                    <div className="skeleton" style={{ height: '220px', width: '100%' }} />
+                    <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                        <div className="flex items-center gap-4" style={{ marginTop: '-60px' }}>
+                            <div className="skeleton" style={{ width: 100, height: 100, borderRadius: '50%' }} />
+                            <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                                <div className="skeleton" style={{ height: 24, width: '180px' }} />
+                                <div className="skeleton" style={{ height: 16, width: '280px' }} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const isOwner = user.id === profile.id;
     const isFriend = friends.some(f => f.username === user.username);
@@ -268,7 +286,11 @@ export default function ProfilePage() {
                         ))}
                     </div>
                 ) : displayPosts.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', padding: 'var(--space-6)' }}>No posts to show.</p>
+                    <div className="post-card flex-col items-center justify-between" style={{ padding: 'var(--space-7) var(--space-4)', textAlign: 'center' }}>
+                        <Inbox size={48} strokeWidth={1.5} style={{ color: 'var(--text-tertiary)', opacity: 0.5, marginBottom: 'var(--space-2)' }} />
+                        <h3 style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', fontWeight: 'var(--font-medium)' }}>No posts found</h3>
+                        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>Posts shared by {profile.username} will appear here.</p>
+                    </div>
                 ) : (
                     <div className="flex-col gap-4">
                         {displayPosts.map(post => (
@@ -304,10 +326,13 @@ export default function ProfilePage() {
                                                 background: 'rgba(220, 38, 38, 0.15)',
                                                 color: 'var(--danger)',
                                                 cursor: 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
                                                 fontWeight: 'var(--font-bold)'
                                             }}
                                         >
-                                            🎣 {post.bait_score}% Bait
+                                            <Fish size={14} /> {post.bait_score}% Bait
                                         </span>
                                     )}
                                 </div>
@@ -359,7 +384,9 @@ export default function ProfilePage() {
                             gap: '16px'
                         }}
                     >
-                        <div style={{ fontSize: '2.5rem' }}>🎣🔥</div>
+                        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(220, 38, 38, 0.12)', color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                            <Fish size={32} />
+                        </div>
                         <h2 style={{ margin: 0, color: 'var(--danger)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                             วิเคราะห์จิตใต้สำนึกคนอวด (Bait Analysis)
                         </h2>
