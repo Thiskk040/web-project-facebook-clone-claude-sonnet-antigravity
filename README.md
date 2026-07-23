@@ -178,6 +178,11 @@ Built a high-performance 60fps HTML5 Canvas particle swirl animation (`src/Antig
 - **Mouse Interactivity & Gravity Physics:** Added real-time mouse tracking (`mousemove`) applying antigravity spring forces and orbital rotation to nearby particles.
 - **Translucent Glass Layering:** Placed the particle canvas behind translucent Liquid Glaze Auth panels (`.auth-branding-panel` & `.auth-form-panel` with `backdrop-filter: blur(28px)`).
 
+### 11. Duplicate Message Socket Emission Fix (`messageRoutes.js` & `MessagesPage.jsx`)
+Resolved a bug where sent chat messages would occasionally render as duplicates in the conversation view:
+- **Backend Room Broadcast Filtering:** Fixed `routes/messageRoutes.js` to avoid emitting redundant `new_message` socket events when `receiver_id === req.user.id`.
+- **Frontend State Deduplication:** Updated `setMessages` in `MessagesPage.jsx` to filter incoming socket payloads by `msg.id` (`if (prev.some(m => m.id === msg.id)) return prev;`), guaranteeing single-instance rendering.
+
 ---
 
 

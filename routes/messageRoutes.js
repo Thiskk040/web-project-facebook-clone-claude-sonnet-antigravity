@@ -50,9 +50,11 @@ router.post('/', authenticateToken, (req, res) => {
     
     db.run("INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)", [req.user.id, receiver_id, content], function(err) {
         if (err) throw err;
-        const msg = { id: this.lastID, sender_id: req.user.id, receiver_id, content, is_read: 0, created_at: new Date().toISOString() };
+        const msg = { id: this.lastID, sender_id: req.user.id, receiver_id: parseInt(receiver_id), content, is_read: 0, created_at: new Date().toISOString() };
         io.to(`user_${receiver_id}`).emit(`new_message_${receiver_id}`, msg);
-        io.to(`user_${req.user.id}`).emit(`new_message_${req.user.id}`, msg);
+        if (parseInt(receiver_id) !== parseInt(req.user.id)) {
+            io.to(`user_${req.user.id}`).emit(`new_message_${req.user.id}`, msg);
+        }
         res.status(201).json(msg);
     });
 });

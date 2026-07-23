@@ -54,7 +54,10 @@ export default function MessagesPage() {
         socket.on(`new_message_${user.id}`, (msg) => {
             setActiveUser(currentActive => {
                 if (currentActive && (msg.sender_id === currentActive.id || msg.receiver_id === currentActive.id)) {
-                    setMessages(prev => [...prev, msg]);
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === msg.id)) return prev;
+                        return [...prev, msg];
+                    });
                 }
                 return currentActive;
             });
