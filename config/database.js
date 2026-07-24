@@ -18,6 +18,19 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
     
+    db.run(`ALTER TABLE users ADD COLUMN two_factor_secret TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run(`ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER DEFAULT 0`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+
+    db.run(`CREATE TABLE IF NOT EXISTS otp_attempts (
+        key TEXT PRIMARY KEY,
+        attempts INTEGER DEFAULT 1,
+        first_attempt INTEGER
+    )`);
+    
     db.run(`CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         user_id INTEGER NOT NULL, 

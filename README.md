@@ -201,7 +201,19 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Wildcard Ignore Rule:** Updated `.gitignore` to `facebook.db*` to exclude SQLite database files, WAL (`facebook.db-wal`), and SHM (`facebook.db-shm`) temporary files.
 - **Git Index Cleaned:** Executed `git rm --cached facebook.db*` to un-track database files from Git cache while keeping local database files intact.
 - **Complete Git History Purge:** Performed `git filter-branch --force --index-filter "git rm --cached --ignore-unmatch facebook.db*"` to purge all historical occurrences of SQLite database files across every commit in the repository.
-- **Force Pushed Remote:** Executed `git push origin master --force` to synchronize clean, sanitized commit history with GitHub remote repository.
+### 15. Full 2FA Authentication System Implementation (Register + Login)
+- **TOTP Dependencies:** Installed `speakeasy` and `qrcode` for standard TOTP secret generation, QR Code Data URL rendering, and 6-digit OTP verification.
+- **Idempotent Database Migration:** Updated `config/database.js` adding `two_factor_secret` & `two_factor_enabled` columns to `users` table via `ALTER TABLE` error handlers, alongside an `otp_attempts` table for rate limiting.
+- **Cluster Atomic Rate Limiter:** Developed an atomic SQLite rate limiter using `INSERT ... ON CONFLICT(key) DO UPDATE` with a 10-minute sliding window reset logic (`600,000ms`) and automatic 24-hour cleanup to prevent rate limit lockouts across 16 cluster workers without external Redis dependency.
+- **Token Isolation Enforcement:** Updated `middleware/auth.js` (`authenticateToken`) and `socket/socketHandler.js` to reject any JWT tokens containing temporary purpose claims (`register_2fa_pending`, `login_2fa_pending`), preventing unauthorized access to protected REST APIs and Socket.io connections.
+- **Full Auth Flow Overhaul (`authRoutes.js`):**
+  - `POST /auth/register-init`: Generates secret `glaze (${username})`, QR code, and `register_2fa_pending` temp token.
+  - `POST /auth/register-resend-2fa`: Regenerates QR codes securely requiring valid unexpired `tempToken` authorization proof.
+  - `POST /auth/register-verify-2fa`: Validates OTP code, saves user with `two_factor_enabled = 1`, and issues full session JWT.
+  - `POST /auth/login`: Checks password credentials; if 2FA enabled, returns `requires2FA: true` with `loginTempToken`.
+  - `POST /auth/login-verify-2fa`: Verifies OTP against stored user TOTP secret and issues full session JWT upon success.
+- **Liquid Glass Frontend Wizard (`AuthPage.jsx` & `AuthContext.jsx`):** Integrated 2-step registration wizard and login 2FA verification modal matching Apple HIG / Liquid Glaze design tokens.
+- **Verification:** Created `generate_otp.js` dev helper and `test_2fa.js` automated suite. Validated 100% test pass rate across token isolation, invalid OTP rejection, registration setup, and login challenge enforcement. Validated clean frontend build (`npm run build`).
 
 ---
 

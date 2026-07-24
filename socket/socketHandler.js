@@ -7,6 +7,7 @@ module.exports = (io) => {
         
         jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
             if (err) return next(new Error('Authentication error: Invalid token'));
+            if (user.purpose) return next(new Error('Authentication error: Token not valid for socket connection'));
             socket.user = user;
             
             // Disconnect socket when token expires

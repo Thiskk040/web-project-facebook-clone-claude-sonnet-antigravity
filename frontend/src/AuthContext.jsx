@@ -10,15 +10,38 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (username, password) => {
         const res = await axios.post('http://localhost:3000/auth/login', { username, password });
-        setToken(res.data.token);
-        setUser(res.data.user);
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('user', JSON.stringify(res.data.user));
+        if (res.data.requires2FA) {
+            return { requires2FA: true, loginTempToken: res.data.loginTempToken };
+        }
+        completeSession(res.data.token, res.data.user);
+        return { requires2FA: false };
     };
 
-    const register = async (username, password) => {
-        await axios.post('http://localhost:3000/auth/register', { username, password });
-        await login(username, password);
+    const verifyLogin2FA = async (loginTempToken, code) => {
+        const res = await axios.post('http://localhost:3000/auth/login-verify-2fa', { loginTempToken, code });
+        completeSession(res.data.token, res.data.user);
+    };
+
+    const registerInit = async (username, password) => {
+        const res = await axios.post('http://localhost:3000/auth/register-init', { username, password });
+        return res.data; // { tempToken, qrCodeUrl, secretKey }
+    };
+
+    const registerResend2FA = async (tempToken) => {
+        const res = await axios.post('http://localhost:3000/auth/register-resend-2fa', { tempToken });
+        return res.data; // { tempToken, qrCodeUrl, secretKey }
+    };
+
+    const registerVerify2FA = async (tempToken, code) => {
+        const res = await axios.post('http://localhost:3000/auth/register-verify-2fa', { tempToken, code });
+        completeSession(res.data.token, res.data.user);
+    };
+
+    const completeSession = (newToken, newUser) => {
+        setToken(newToken);
+        setUser(newUser);
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(newUser));
     };
 
     const logout = () => {
@@ -38,7 +61,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ token, user, login, register, logout, updateUser }}>
+        <AuthContext.Provider value={{ 
+            token, 
+            user, 
+            login, 
+            verifyLogin2FA, 
+            registerInit, 
+            registerResend2FA, 
+            registerVerify2FA, 
+            logout, 
+            updateUser 
+        }}>
             {children}
         </AuthContext.Provider>
     );
