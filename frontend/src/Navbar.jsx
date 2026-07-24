@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { Bell, MessageCircle, LogOut, Search, Sun, Moon, Home, User, Check, CheckCircle, CheckCircle2, Sparkles, EyeOff } from 'lucide-react';
+import { Bell, MessageCircle, LogOut, Search, Sun, Moon, Home, User, CheckCircle, Sparkles, EyeOff, Heart, MessageSquare, UserPlus, UserCheck, Tag, CheckCheck } from 'lucide-react';
 import GlazeLogo from './GlazeLogo';
 
 const baseUrl = 'http://localhost:3000';
@@ -19,6 +19,7 @@ export default function Navbar() {
     const [isSearching, setIsSearching] = useState(false);
 
     const [notifications, setNotifications] = useState([]);
+    const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showBaitBadge, setShowBaitBadge] = useState(localStorage.getItem('showBaitBadge') !== 'false');
     const [toast, setToast] = useState('');
@@ -32,6 +33,22 @@ export default function Navbar() {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
+
+    // Fetch unread messages count on navigation / mount
+    useEffect(() => {
+        if (!token || !user) return;
+        const fetchUnreadMessagesCount = async () => {
+            try {
+                const res = await axios.get(`${baseUrl}/messages/unread/count`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setUnreadMessagesCount(res.data.count || 0);
+            } catch (err) {
+                console.error('Error fetching unread messages count:', err);
+            }
+        };
+        fetchUnreadMessagesCount();
+    }, [location.pathname, token, user]);
 
     // Click outside handlers
     useEffect(() => {
@@ -59,13 +76,14 @@ export default function Navbar() {
                 });
                 const mapped = res.data.map(n => {
                     let msg = '';
-                    if (n.type === 'like') msg = `${n.actor_username} liked your post.`;
-                    else if (n.type === 'comment') msg = `${n.actor_username} commented on your post.`;
-                    else if (n.type === 'friend_request') msg = `New friend request from ${n.actor_username}!`;
-                    else if (n.type === 'friend_accept') msg = `${n.actor_username} accepted your friend request.`;
-                    else if (n.type === 'new_post') msg = `${n.actor_username} created a new post.`;
-                    else if (n.type === 'tag') msg = `${n.actor_username} tagged you in a post.`;
-                    return { id: n.id, msg, is_read: n.is_read, time: new Date(n.created_at) };
+                    if (n.type === 'like') msg = `${n.actor_username || 'Someone'} liked your post.`;
+                    else if (n.type === 'comment') msg = `${n.actor_username || 'Someone'} commented on your post.`;
+                    else if (n.type === 'friend_request') msg = `New friend request from ${n.actor_username || 'a user'}!`;
+                    else if (n.type === 'friend_accept') msg = `${n.actor_username || 'A user'} accepted your friend request.`;
+                    else if (n.type === 'new_post') msg = `${n.actor_username || 'Someone'} created a new post.`;
+                    else if (n.type === 'tag') msg = `${n.actor_username || 'Someone'} tagged you in a post.`;
+                    else msg = n.msg || 'New notification';
+                    return { id: n.id, type: n.type, msg, is_read: n.is_read, time: new Date(n.created_at || Date.now()) };
                 });
                 setNotifications(mapped);
             } catch (err) {
@@ -78,25 +96,31 @@ export default function Navbar() {
         const socket = io(baseUrl, { auth: { token }, transports: ['websocket'] });
         socketRef.current = socket;
 
-        const handleRealtimeNotification = (msg) => {
-            setNotifications(prev => [{ id: Date.now(), msg, is_read: 0, time: new Date() }, ...prev]);
+        const handleRealtimeNotification = (msg, type = 'general') => {
+            setNotifications(prev => [{ id: Date.now(), type, msg, is_read: 0, time: new Date() }, ...prev]);
             showToastMessage(msg);
         };
 
         socket.on('new_interaction', (data) => {
             if (data.user_id !== user.id) {
-                handleRealtimeNotification(`${data.username} liked a post.`);
+                handleRealtimeNotification(`${data.username} liked a post.`, 'like');
             }
         });
 
         socket.on('new_comment', (data) => {
             if (data.user_id !== user.id) {
-                handleRealtimeNotification(`${data.username} commented on a post.`);
+                handleRealtimeNotification(`${data.username} commented on a post.`, 'comment');
             }
         });
 
         socket.on(`friend_request_${user.id}`, (data) => {
-            handleRealtimeNotification(`New friend request from ${data.requester_username}!`);
+            handleRealtimeNotification(`New friend request from ${data.requester_username}!`, 'friend_request');
+        });
+
+        socket.on(`new_message_${user.id}`, (data) => {
+            if (data.sender_id !== user.id) {
+                setUnreadMessagesCount(prev => prev + 1);
+            }
         });
 
         socket.on('token_expired', () => {
@@ -156,6 +180,54 @@ export default function Navbar() {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
         } catch (err) {
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const unreadList = notifications.filter(n => !n.is_read);
+            await Promise.all(
+                unreadList.map(n =>
+                    axios.put(`${baseUrl}/notifications/${n.id}/read`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }).catch(() => {})
+                )
+            );
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+            showToastMessage('All notifications marked as read');
+        } catch (err) {
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+        }
+    };
+
+    const getTimeAgo = (date) => {
+        if (!date || isNaN(new Date(date))) return '';
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        if (seconds < 60) return 'Just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    };
+
+    const getNotifIcon = (type) => {
+        switch (type) {
+            case 'like':
+                return <Heart size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />;
+            case 'comment':
+                return <MessageSquare size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />;
+            case 'friend_request':
+                return <UserPlus size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />;
+            case 'friend_accept':
+                return <UserCheck size={16} style={{ color: '#10b981', flexShrink: 0 }} />;
+            case 'tag':
+                return <Tag size={16} style={{ color: '#8b5cf6', flexShrink: 0 }} />;
+            case 'new_post':
+                return <Sparkles size={16} style={{ color: '#f59e0b', flexShrink: 0 }} />;
+            default:
+                return <Bell size={16} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />;
         }
     };
 
@@ -258,8 +330,13 @@ export default function Navbar() {
                     </button>
 
                     {/* Messages Link */}
-                    <Link to="/messages" className="btn-icon" style={{ color: location.pathname === '/messages' ? 'var(--accent)' : 'var(--text-secondary)', minWidth: 40, minHeight: 40 }} title="Messages">
+                    <Link to="/messages" className="btn-icon" style={{ color: location.pathname === '/messages' ? 'var(--accent)' : 'var(--text-secondary)', minWidth: 40, minHeight: 40, position: 'relative' }} title="Messages">
                         <MessageCircle size={20} />
+                        {unreadMessagesCount > 0 && (
+                            <span className="notif-badge-anim" style={{ position: 'absolute', top: 4, right: 4, background: 'var(--danger)', width: 14, height: 14, borderRadius: '50%', color: '#fff', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                                {unreadMessagesCount}
+                            </span>
+                        )}
                     </Link>
 
                     {/* Notifications Bell Dropdown */}
@@ -273,34 +350,90 @@ export default function Navbar() {
                             )}
                         </button>
                         {showNotifications && (
-                            <div className="floating-material" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', padding: '12px', zIndex: 101 }}>
-                                <div className="flex items-center justify-between" style={{ marginBottom: '8px' }}>
-                                    <h4 style={{ margin: 0, fontSize: 'var(--text-base)' }}>Notifications</h4>
-                                </div>
-                                {notifications.length === 0 ? <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', margin: '12px 0', textAlign: 'center' }}>No new notifications</p> : null}
-                                {notifications.map(n => (
-                                    <div
-                                        key={n.id}
-                                        onClick={() => { markNotificationAsRead(n.id); setShowNotifications(false); }}
-                                        style={{
-                                            padding: '10px',
-                                            marginBottom: '4px',
-                                            fontSize: 'var(--text-sm)',
-                                            cursor: 'pointer',
-                                            fontWeight: n.is_read ? 'var(--font-regular)' : 'var(--font-semibold)',
-                                            opacity: n.is_read ? 0.7 : 1,
-                                            borderRadius: 'var(--radius-sm)',
-                                            background: 'var(--surface-1)',
-                                            color: 'var(--text-main)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
-                                    >
-                                        {!n.is_read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />}
-                                        <span style={{ flex: 1 }}>{n.msg}</span>
+                            <div className="floating-material notif-dropdown" style={{ position: 'absolute', right: 0, top: '48px', width: '350px', padding: '16px', zIndex: 101, borderRadius: 'var(--radius-lg)' }}>
+                                <div className="flex items-center justify-between" style={{ marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
+                                    <div className="flex items-center gap-2">
+                                        <h4 style={{ margin: 0, fontSize: 'var(--text-base)', fontWeight: 'var(--font-bold)', color: 'var(--text-main)' }}>Notifications</h4>
+                                        {unreadNotificationsCount > 0 && (
+                                            <span style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 'bold' }}>
+                                                {unreadNotificationsCount} unread
+                                            </span>
+                                        )}
                                     </div>
-                                ))}
+                                    {unreadNotificationsCount > 0 && (
+                                        <button
+                                            onClick={markAllAsRead}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: 'var(--accent)',
+                                                fontSize: 'var(--text-xs)',
+                                                fontWeight: 'var(--font-medium)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '4px 6px',
+                                                borderRadius: 'var(--radius-sm)'
+                                            }}
+                                            title="Mark all as read"
+                                        >
+                                            <CheckCheck size={14} /> Mark read
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                <div className="notif-list-container" style={{ maxHeight: '380px', overflowY: 'auto', paddingRight: '2px' }}>
+                                    {notifications.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--text-tertiary)' }}>
+                                            <Bell size={28} style={{ opacity: 0.4, marginBottom: '8px' }} />
+                                            <p style={{ fontSize: 'var(--text-xs)', margin: 0 }}>No notifications yet</p>
+                                        </div>
+                                    ) : null}
+                                    {notifications.map(n => (
+                                        <div
+                                            key={n.id}
+                                            onClick={() => { markNotificationAsRead(n.id); }}
+                                            className={`notif-item ${n.is_read ? 'notif-item-read' : 'notif-item-unread'}`}
+                                            style={{
+                                                padding: '10px 12px',
+                                                marginBottom: '6px',
+                                                fontSize: 'var(--text-sm)',
+                                                cursor: 'pointer',
+                                                borderRadius: 'var(--radius-md)',
+                                                background: n.is_read ? 'var(--surface-1)' : 'rgba(24, 119, 242, 0.08)',
+                                                color: 'var(--text-main)',
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                gap: '10px',
+                                                transition: 'all 0.15s ease',
+                                                borderLeft: n.is_read ? '3px solid transparent' : '3px solid var(--accent)'
+                                            }}
+                                        >
+                                            <div style={{ marginTop: '2px' }}>
+                                                {getNotifIcon(n.type)}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <p style={{
+                                                    margin: 0,
+                                                    lineHeight: '1.4',
+                                                    fontWeight: n.is_read ? 'var(--font-regular)' : 'var(--font-semibold)',
+                                                    fontSize: 'var(--text-xs)'
+                                                }}>
+                                                    {n.msg}
+                                                </p>
+                                                {n.time && (
+                                                    <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '3px', display: 'block' }}>
+                                                        {getTimeAgo(n.time)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {!n.is_read && (
+                                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: '5px' }} title="Unread" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -327,8 +460,11 @@ export default function Navbar() {
                 <Link to="/" style={{ color: location.pathname === '/' ? 'var(--accent)' : 'var(--text-secondary)' }} title="Home">
                     <Home size={22} />
                 </Link>
-                <Link to="/messages" style={{ color: location.pathname === '/messages' ? 'var(--accent)' : 'var(--text-secondary)' }} title="Messages">
+                <Link to="/messages" style={{ color: location.pathname === '/messages' ? 'var(--accent)' : 'var(--text-secondary)', position: 'relative' }} title="Messages">
                     <MessageCircle size={22} />
+                    {unreadMessagesCount > 0 && (
+                        <span className="notif-badge-anim" style={{ position: 'absolute', top: 4, right: 12, background: 'var(--danger)', width: 10, height: 10, borderRadius: '50%' }} />
+                    )}
                 </Link>
                 <button onClick={() => setShowNotifications(!showNotifications)} style={{ color: 'var(--text-secondary)', background: 'transparent', position: 'relative' }} title="Notifications">
                     <Bell size={22} />

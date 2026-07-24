@@ -21,6 +21,16 @@ router.get('/conversations', authenticateToken, (req, res) => {
     });
 });
 
+router.get('/unread/count', authenticateToken, (req, res) => {
+    db.get(`
+        SELECT COUNT(*) as count FROM messages 
+        WHERE receiver_id = ? AND is_read = 0
+    `, [req.user.id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ count: row ? row.count : 0 });
+    });
+});
+
 router.get('/:userId', authenticateToken, (req, res) => {
     db.all(`
         SELECT * FROM messages 

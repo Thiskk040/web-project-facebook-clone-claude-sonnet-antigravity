@@ -134,6 +134,28 @@ export default function ProfilePage() {
         } catch (e) { showToast("Error removing friend"); }
     };
 
+    if (!profile) {
+        return (
+            <div>
+                <Navbar />
+                <div className="container" style={{ maxWidth: '800px' }}>
+                    <div className="post-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 'var(--space-5)' }}>
+                        <div className="skeleton" style={{ height: '220px', width: '100%' }} />
+                        <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                            <div className="flex items-center gap-4" style={{ marginTop: '-60px' }}>
+                                <div className="skeleton" style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid var(--surface-0)' }} />
+                                <div style={{ marginTop: '40px' }}>
+                                    <div className="skeleton" style={{ width: '160px', height: '24px', marginBottom: '8px' }} />
+                                    <div className="skeleton" style={{ width: '220px', height: '14px' }} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
             <Navbar />

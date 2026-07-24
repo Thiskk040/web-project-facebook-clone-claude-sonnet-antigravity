@@ -183,6 +183,20 @@ Resolved a bug where sent chat messages would occasionally render as duplicates 
 - **Backend Room Broadcast Filtering:** Fixed `routes/messageRoutes.js` to avoid emitting redundant `new_message` socket events when `receiver_id === req.user.id`.
 - **Frontend State Deduplication:** Updated `setMessages` in `MessagesPage.jsx` to filter incoming socket payloads by `msg.id` (`if (prev.some(m => m.id === msg.id)) return prev;`), guaranteeing single-instance rendering.
 
+### 12. Notification Dropdown & Realtime Chat Unread Badge Refactor (`Navbar.jsx`, `messageRoutes.js`, `index.css`)
+Resolved UI bugs in notification dropdown scrolling and missing real-time chat unread notification badges:
+- **Fixed Height & Scroll Containment:** Enforced `max-height: 380px`, `overflow-y: auto`, and custom webkit scrollbar (`.notif-list-container`) on the Notification dropdown in `Navbar.jsx`.
+- **Batch Mark-All-Read Control:** Introduced a "Mark read" (`<CheckCheck />`) header button calling `PUT /notifications/:id/read` to mark all unread notifications instantly.
+- **Categorized Visual Icons:** Assigned semantic Lucide icons matching notification types (`<Heart />` for likes, `<MessageSquare />` for comments, `<UserPlus />` for friend requests, `<UserCheck />` for accepted requests, `<Tag />` for mentions, and `<Sparkles />` for new posts).
+- **Realtime Chat Unread Badge:** Added backend `GET /messages/unread/count` API. Integrated `unreadMessagesCount` state in `Navbar.jsx` with `new_message_${user.id}` Socket.io listeners, displaying a dynamic red badge on both desktop and mobile chat navbar icons.
+### 13. "Flowing Glaze" Liquid Pastel Loading State Upgrade (`tokens.css`, `index.css`, `FeedPage.jsx`, `MessagesPage.jsx`, `ProfilePage.jsx`)
+Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Glaze" liquid pastel animation signature:
+- **Design Token Integration (`tokens.css`):** Introduced `--glaze-stop-1` (strawberry pastel), `--glaze-stop-2` (lavender pastel), and `--glaze-stop-3` (blue pastel) tokens for light and dark modes.
+- **Glaze Flow Animation (`index.css`):** Replaced `.skeleton` background shimmer with `.skeleton::after` pseudo-element rendering a diagonal pastel gradient sweep (`glazeFlow` keyframes).
+- **Accessibility & Motion Safety:** Enforced `@media (prefers-reduced-motion: reduce)` rules explicitly targeting `.skeleton::after { animation: none !important; opacity: 0.4 !important; }` to halt motion cleanly for users preferring reduced motion.
+- **Universal Application Across Views:** Integrated Flowing Glaze skeleton loaders across `ProfilePage.jsx` (header cover/avatar/bio), `FeedPage.jsx` (post cards loader), and `MessagesPage.jsx` (conversation list & chat bubbles loader).
+- **Verified Build:** Validated production bundle via `npm run build` (100% clean output).
+
 ---
 
 

@@ -405,17 +405,33 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   to { transform: rotate(0deg) scale(1); opacity: 1; }
 }
 
-/* Skeleton Shimmer Loader */
+/* Flowing Glaze Skeleton Loader */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-0) 25%, var(--border-strong) 50%, var(--surface-0) 75%);
-  background-size: 200% 100%;
-  animation: skeletonShimmer 1.5s infinite var(--ease-standard);
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-1);
   border-radius: var(--radius-sm);
 }
 
-@keyframes skeletonShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    var(--glaze-stop-1) 35%,
+    var(--glaze-stop-2) 50%,
+    var(--glaze-stop-3) 65%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: glazeFlow 1.8s infinite linear;
+}
+
+@keyframes glazeFlow {
+  0%   { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
 }
 
 /* Mobile Bottom Nav Bar */
@@ -462,4 +478,32 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   .liquid-glaze::before, .btn-glaze::before {
     display: none !important;
   }
+  .skeleton::after {
+    animation: none !important;
+    opacity: 0.4 !important;
+  }
 }
+
+/* Notification Dropdown Custom Scrollbar & Items */
+.notif-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+.notif-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.notif-list-container::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+.notif-list-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+.notif-item {
+  transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+.notif-item:hover {
+  background: var(--surface-2) !important;
+  transform: translateX(2px);
+}
+

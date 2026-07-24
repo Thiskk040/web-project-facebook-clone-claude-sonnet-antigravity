@@ -14,6 +14,8 @@ export default function MessagesPage() {
     const initialUserId = searchParams.get('user');
 
     const [conversations, setConversations] = useState([]);
+    const [loadingConvos, setLoadingConvos] = useState(true);
+    const [loadingMsgs, setLoadingMsgs] = useState(false);
     const [activeUser, setActiveUser] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
@@ -26,6 +28,7 @@ export default function MessagesPage() {
     useEffect(() => {
         const fetchConversations = async () => {
             try {
+                setLoadingConvos(true);
                 const res = await axios.get(`${baseUrl}/messages/conversations`, { headers: { Authorization: `Bearer ${token}` } });
                 setConversations(res.data);
                 
@@ -45,6 +48,7 @@ export default function MessagesPage() {
                     }
                 }
             } catch (err) { console.error(err); }
+            finally { setLoadingConvos(false); }
         };
         fetchConversations();
 
@@ -61,20 +65,31 @@ export default function MessagesPage() {
                 }
                 return currentActive;
             });
-            fetchConversations();
+            setConversations(prev => {
+                const existing = prev.find(c => c.id === (msg.sender_id === user.id ? msg.receiver_id : msg.sender_id));
+                if (existing) {
+                    return prev.map(c => c.id === existing.id ? { ...c, last_message: msg.content, created_at: msg.created_at, is_read: (msg.sender_id === user.id ? 1 : 0), sender_id: msg.sender_id } : c);
+                } else {
+                    return prev;
+                }
+            });
         });
 
-        return () => socket.disconnect();
-    }, [token, user.id, initialUserId]);
+        return () => {
+            socket.disconnect();
+        };
+    }, [token, user, initialUserId]);
 
     useEffect(() => {
         if (activeUser) {
             const fetchMessages = async () => {
                 try {
+                    setLoadingMsgs(true);
                     const res = await axios.get(`${baseUrl}/messages/${activeUser.id}`, { headers: { Authorization: `Bearer ${token}` } });
                     setMessages(res.data);
                     setConversations(prev => prev.map(c => c.id === activeUser.id ? { ...c, is_read: 1 } : c));
                 } catch (err) { console.error(err); }
+                finally { setLoadingMsgs(false); }
             };
             fetchMessages();
         }
@@ -143,7 +158,20 @@ export default function MessagesPage() {
                     </div>
                     
                     <div style={{ flex: 1, overflowY: 'auto' }}>
-                        {conversations.map(c => (
+                        {loadingConvos ? (
+                            <div style={{ padding: '8px' }}>
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={`sk-conv-${i}`} className="flex items-center gap-3" style={{ padding: '12px 8px', marginBottom: '4px' }}>
+                                        <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }} />
+                                        <div style={{ flex: 1 }}>
+                                            <div className="skeleton" style={{ width: '100px', height: '14px', marginBottom: '6px' }} />
+                                            <div className="skeleton" style={{ width: '130px', height: '10px' }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
+                        {!loadingConvos && conversations.map(c => (
                             <div 
                                 key={c.id} 
                                 onClick={() => selectConversation(c)}
@@ -181,7 +209,15 @@ export default function MessagesPage() {
                             </div>
                             
                             <div style={{ flex: 1, padding: 'var(--space-5)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                                {messages.map((m, idx) => {
+                                {loadingMsgs ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        <div className="skeleton" style={{ width: '180px', height: '36px', borderRadius: '18px', alignSelf: 'flex-start' }} />
+                                        <div className="skeleton" style={{ width: '220px', height: '36px', borderRadius: '18px', alignSelf: 'flex-end' }} />
+                                        <div className="skeleton" style={{ width: '140px', height: '36px', borderRadius: '18px', alignSelf: 'flex-start' }} />
+                                        <div className="skeleton" style={{ width: '200px', height: '36px', borderRadius: '18px', alignSelf: 'flex-end' }} />
+                                    </div>
+                                ) : (
+                                    messages.map((m, idx) => {
                                     const isMe = m.sender_id === user.id;
                                     const isGhosted = isMe && m.is_read === 1 && m.hours_since_seen >= 24;
                                     const prevMsg = messages[idx - 1];
@@ -255,7 +291,7 @@ export default function MessagesPage() {
                                             </div>
                                         </div>
                                     )
-                                })}
+                                }))}
                                 <div ref={messagesEndRef} />
                             </div>
                             

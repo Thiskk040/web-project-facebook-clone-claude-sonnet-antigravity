@@ -63,6 +63,7 @@ const fakeAds = [
 export default function FeedPage() {
     const { token, user, logout } = useAuth();
     const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
     const [toast, setToast] = useState('');
@@ -99,6 +100,7 @@ export default function FeedPage() {
         // Fetch Initial Data
         const fetchData = async () => {
             try {
+                setLoading(true);
                 const config = { headers: { Authorization: `Bearer ${token}` } };
                 const [postsRes, suggestedRes, requestsRes] = await Promise.all([
                     axios.get(`${baseUrl}/posts`, config),
@@ -110,6 +112,8 @@ export default function FeedPage() {
                 setFriendRequests(requestsRes.data);
             } catch (err) {
                 console.error(err);
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
@@ -334,6 +338,26 @@ export default function FeedPage() {
                             </button>
                         </div>
                     </form>
+
+                    {/* Loading Flowing Glaze Skeletons */}
+                    {loading && (
+                        <>
+                            {[1, 2, 3].map(i => (
+                                <div key={`sk-post-${i}`} className="glass post-card" style={{ padding: '20px', marginBottom: 'var(--space-5)', borderRadius: 'var(--radius-lg)' }}>
+                                    <div className="flex items-center gap-3" style={{ marginBottom: '16px' }}>
+                                        <div className="skeleton" style={{ width: 42, height: 42, borderRadius: '50%', flexShrink: 0 }} />
+                                        <div style={{ flex: 1 }}>
+                                            <div className="skeleton" style={{ width: '140px', height: '14px', marginBottom: '8px' }} />
+                                            <div className="skeleton" style={{ width: '80px', height: '10px' }} />
+                                        </div>
+                                    </div>
+                                    <div className="skeleton" style={{ width: '100%', height: '14px', marginBottom: '10px' }} />
+                                    <div className="skeleton" style={{ width: '85%', height: '14px', marginBottom: '10px' }} />
+                                    <div className="skeleton" style={{ width: '60%', height: '14px' }} />
+                                </div>
+                            ))}
+                        </>
+                    )}
 
                     {/* Posts List */}
                     {posts.map((post, index) => {

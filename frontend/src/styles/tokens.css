@@ -34,6 +34,9 @@
   /* Glaze Signature Tokens & Vibrant Ambient Mesh */
   --glaze-gradient: linear-gradient(135deg, #ffd6e8 0%, #c9b6ff 45%, #9ad4ff 100%);
   --glaze-sheen: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, transparent 66%);
+  --glaze-stop-1: rgba(255, 214, 232, 0.55);
+  --glaze-stop-2: rgba(201, 182, 255, 0.55);
+  --glaze-stop-3: rgba(154, 212, 255, 0.55);
   --bg-mesh: radial-gradient(at 10% 10%, rgba(255, 182, 217, 0.65) 0px, transparent 55%), radial-gradient(at 90% 15%, rgba(165, 216, 255, 0.65) 0px, transparent 55%), radial-gradient(at 50% 90%, rgba(216, 180, 254, 0.6) 0px, transparent 55%), #f8f6f2;
 
   /* Status Colors */
@@ -79,6 +82,9 @@
   /* Glaze Signature Tokens & Electric Aurora Mesh */
   --glaze-gradient: linear-gradient(135deg, #ffd6e8 0%, #c9b6ff 45%, #9ad4ff 100%);
   --glaze-sheen: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.25) 48%, transparent 66%);
+  --glaze-stop-1: rgba(255, 214, 232, 0.45);
+  --glaze-stop-2: rgba(201, 182, 255, 0.45);
+  --glaze-stop-3: rgba(154, 212, 255, 0.45);
   --bg-mesh: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.55) 0px, transparent 55%), radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.5) 0px, transparent 55%), radial-gradient(at 50% 100%, rgba(236, 72, 153, 0.45) 0px, transparent 55%), #090d16;
 
   /* Status Colors */
