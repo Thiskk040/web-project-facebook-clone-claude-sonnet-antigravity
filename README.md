@@ -197,6 +197,10 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Universal Application Across Views:** Integrated Flowing Glaze skeleton loaders across `ProfilePage.jsx` (header cover/avatar/bio), `FeedPage.jsx` (post cards loader), and `MessagesPage.jsx` (conversation list & chat bubbles loader).
 - **Verified Build:** Validated production bundle via `npm run build` (100% clean output).
 
+### 14. Git Ignored Wildcard & Database Tracking Removal (`.gitignore`)
+- **Wildcard Ignore Rule:** Updated `.gitignore` to `facebook.db*` to exclude SQLite database files, WAL (`facebook.db-wal`), and SHM (`facebook.db-shm`) temporary files.
+- **Git Index Cleaned:** Executed `git rm --cached facebook.db*` to un-track database files from Git cache while keeping local database files intact.
+
 ---
 
 

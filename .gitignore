@@ -1,6 +1,6 @@
 node_modules/
 .env
-facebook.db
+facebook.db*
 uploads/
 frontend/node_modules/
 frontend/dist/
