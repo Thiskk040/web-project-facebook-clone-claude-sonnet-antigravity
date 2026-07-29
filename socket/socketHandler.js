@@ -13,6 +13,21 @@ function getOptInStatus(userId) {
     });
 }
 
+function checkFriendship(userId1, userId2) {
+    return new Promise((resolve) => {
+        if (!userId1 || !userId2 || userId1 === userId2) return resolve(false);
+        const query = `
+            SELECT 1 FROM friendships 
+            WHERE status = 'accepted' 
+            AND ((requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?))
+        `;
+        db.get(query, [userId1, userId2, userId2, userId1], (err, row) => {
+            if (err || !row) return resolve(false);
+            resolve(true);
+        });
+    });
+}
+
 module.exports = (io) => {
     io.use((socket, next) => {
         const token = socket.handshake.auth.token;
@@ -53,87 +68,84 @@ module.exports = (io) => {
         socket.join(`user_${socket.user.id}`);
         socket.activeRooms.add(`user_${socket.user.id}`);
 
-        // Client room join event
+        // Client room join event (MANDATORY SERVER COMPUTED ROOM & FRIENDSHIP CHECK)
         socket.on('join_room', async (data) => {
-            const roomId = typeof data === 'string' ? data : data?.roomId;
-            const targetUserId = data?.targetUserId;
-            if (!roomId) return;
+            const targetUserId = parseInt(data?.targetUserId || data?.targetId);
+            if (!targetUserId || isNaN(targetUserId) || targetUserId === socket.user.id) return;
 
-            socket.join(roomId);
-            socket.activeRooms.add(roomId);
+            const senderId = socket.user.id;
+            const isFriend = await checkFriendship(senderId, targetUserId);
+            if (!isFriend) return;
 
-            if (targetUserId) {
-                const senderOptIn = await getOptInStatus(socket.user.id);
-                const peerOptIn = await getOptInStatus(parseInt(targetUserId));
-                const isActive = senderOptIn && peerOptIn;
+            const computedRoomId = `chat_${Math.min(senderId, targetUserId)}_${Math.max(senderId, targetUserId)}`;
+            socket.join(computedRoomId);
+            socket.activeRooms.add(computedRoomId);
 
-                io.to(roomId).emit('live_typing_status_changed', {
-                    roomId,
-                    active: isActive,
-                    senderOptIn,
-                    peerOptIn
-                });
-            }
+            const senderOptIn = await getOptInStatus(senderId);
+            const peerOptIn = await getOptInStatus(targetUserId);
+            const isActive = senderOptIn && peerOptIn;
+
+            io.to(computedRoomId).emit('live_typing_status_changed', {
+                roomId: computedRoomId,
+                active: isActive,
+                senderOptIn,
+                peerOptIn
+            });
         });
 
-        // Live typing draft relay
+        // Live typing draft relay (SERVER COMPUTED ROOM & FRIENDSHIP CHECK)
         socket.on('typing_draft', async (data) => {
             if (!data) return;
-            const { roomId, targetUserId, draftText } = data;
+            const targetId = parseInt(data?.targetUserId || data?.targetId);
             const senderId = socket.user.id;
-            const targetId = parseInt(targetUserId);
 
-            if (!targetId || isNaN(targetId)) return;
+            if (!targetId || isNaN(targetId) || targetId === senderId) return;
 
-            const effectiveRoomId = roomId || `chat_${Math.min(senderId, targetId)}_${Math.max(senderId, targetId)}`;
+            const isFriend = await checkFriendship(senderId, targetId);
+            if (!isFriend) return;
+
+            const computedRoomId = `chat_${Math.min(senderId, targetId)}_${Math.max(senderId, targetId)}`;
 
             // 1. Dual Opt-In Verification (MANDATORY SERVER GATE)
             const senderOptIn = await getOptInStatus(senderId);
             const peerOptIn = await getOptInStatus(targetId);
-
-            if (!senderOptIn || !peerOptIn) {
-                // Dual opt-in failed: drop draft silently
-                return;
-            }
+            if (!senderOptIn || !peerOptIn) return;
 
             // 2. Server-Side Throttle (150ms window)
-            const throttleKey = `${senderId}_${effectiveRoomId}`;
+            const throttleKey = `${senderId}_${computedRoomId}`;
             const now = Date.now();
             const lastEmit = lastTypingEmitMap.get(throttleKey) || 0;
-            if (now - lastEmit < 150) {
-                return; // Suppress high-frequency emissions
-            }
+            if (now - lastEmit < 150) return;
             lastTypingEmitMap.set(throttleKey, now);
 
             // 3. Length Limit Truncation (Max 500 characters)
+            const draftText = data.draftText;
             const safeText = typeof draftText === 'string' ? draftText.slice(0, 500) : '';
 
-            // 4. Relay to peer across cluster workers
+            // 4. Relay to peer strictly inside authorized computed room
             const payload = {
                 userId: senderId,
                 username: socket.user.username,
-                roomId: effectiveRoomId,
+                roomId: computedRoomId,
                 draftText: safeText
             };
 
-            socket.to(effectiveRoomId).emit('peer_typing_draft', payload);
-            io.to(`user_${targetId}`).emit('peer_typing_draft', payload);
+            socket.to(computedRoomId).emit('peer_typing_draft', payload);
         });
 
         // Typing stopped event
-        socket.on('typing_stopped', (data) => {
+        socket.on('typing_stopped', async (data) => {
             const senderId = socket.user.id;
-            const targetId = data?.targetUserId ? parseInt(data.targetUserId) : null;
-            const effectiveRoomId = data?.roomId || (targetId ? `chat_${Math.min(senderId, targetId)}_${Math.max(senderId, targetId)}` : null);
+            const targetId = parseInt(data?.targetUserId || data?.targetId);
+            if (!targetId || isNaN(targetId) || targetId === senderId) return;
 
-            const payload = { userId: senderId, roomId: effectiveRoomId };
+            const isFriend = await checkFriendship(senderId, targetId);
+            if (!isFriend) return;
 
-            if (effectiveRoomId) {
-                socket.to(effectiveRoomId).emit('peer_typing_stopped', payload);
-            }
-            if (targetId) {
-                io.to(`user_${targetId}`).emit('peer_typing_stopped', payload);
-            }
+            const computedRoomId = `chat_${Math.min(senderId, targetId)}_${Math.max(senderId, targetId)}`;
+            const payload = { userId: senderId, roomId: computedRoomId };
+
+            socket.to(computedRoomId).emit('peer_typing_stopped', payload);
         });
 
         // Toggle event handling (Instant Database Sync & Dual Opt-In Broadcast)

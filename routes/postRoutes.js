@@ -26,7 +26,7 @@ router.get('/', authenticateToken, (req, res) => {
     });
 });
 
-router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
+router.post('/', authenticateToken, upload.single('image'), upload.validateImageMagicBytes, async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;

@@ -18,7 +18,7 @@ async function registerAndLoginUser(userData) {
 
 async function runLiveTypingTests() {
     console.log("==================================================");
-    console.log("🚀 Starting Comprehensive Live Typing Feature Tests");
+    console.log("Starting Comprehensive Live Typing Feature Tests");
     console.log("==================================================\n");
 
     const timestamp = Date.now();
@@ -38,13 +38,13 @@ async function runLiveTypingTests() {
         tokenB = resB.token;
         idB = resB.user.id;
 
-        console.log(`✅ Registered User A (ID: ${idA}) and User B (ID: ${idB})`);
+        console.log(`[PASS] Registered User A (ID: ${idA}) and User B (ID: ${idB})`);
 
         // Establish Friendship
         console.log("\n2. Establishing friendship between User A and User B...");
         await axios.post(`${baseUrl}/friend-request`, { addressee_id: idB }, { headers: { Authorization: `Bearer ${tokenA}` } });
         await axios.put(`${baseUrl}/friend-request/accept`, { requester_id: idA }, { headers: { Authorization: `Bearer ${tokenB}` } });
-        console.log("✅ Friendship accepted.");
+        console.log("[PASS] Friendship accepted.");
 
         // 3. Connect Sockets
         console.log("\n3. Connecting Sockets for User A and User B...");
@@ -67,9 +67,9 @@ async function runLiveTypingTests() {
         await new Promise(r => setTimeout(r, 400));
 
         if (!draftReceivedB) {
-            console.log("✅ PASSED: Draft dropped when both users default OFF.");
+            console.log("[PASS] Draft dropped when both users default OFF.");
         } else {
-            console.error("❌ FAILED: Draft relayed despite both users default OFF!");
+            console.error("[FAIL] Draft relayed despite both users default OFF!");
         }
 
         // TEST 2: User A ON, User B OFF
@@ -82,9 +82,9 @@ async function runLiveTypingTests() {
         await new Promise(r => setTimeout(r, 400));
 
         if (!draftReceivedB) {
-            console.log("✅ PASSED: Draft dropped when only 1 user opted in.");
+            console.log("[PASS] Draft dropped when only 1 user opted in.");
         } else {
-            console.error("❌ FAILED: Draft relayed when target user is OFF!");
+            console.error("[FAIL] Draft relayed when target user is OFF!");
         }
 
         // TEST 3: Both Users Opted IN
@@ -96,9 +96,9 @@ async function runLiveTypingTests() {
         // Verify status endpoint
         const statusRes = await axios.get(`${baseUrl}/users/live-typing-status/${idB}`, { headers: { Authorization: `Bearer ${tokenA}` } });
         if (statusRes.data.active) {
-            console.log("✅ Status API confirmed live preview is ACTIVE for both users.");
+            console.log("[PASS] Status API confirmed live preview is ACTIVE for both users.");
         } else {
-            console.error("❌ Status API did not report active!", statusRes.data);
+            console.error("[FAIL] Status API did not report active!", statusRes.data);
         }
 
         const UNIQUE_SECRET_MARKER = `TEST_SECRET_DRAFT_MARKER_${timestamp}`;
@@ -109,9 +109,9 @@ async function runLiveTypingTests() {
         await new Promise(r => setTimeout(r, 400));
 
         if (receivedPayloadB && receivedPayloadB.draftText === UNIQUE_SECRET_MARKER) {
-            console.log(`✅ PASSED: Live typing draft successfully relayed to User B: "${receivedPayloadB.draftText}"`);
+            console.log(`[PASS] Live typing draft successfully relayed to User B: "${receivedPayloadB.draftText}"`);
         } else {
-            console.error("❌ FAILED: Draft not received by User B when both opted in!");
+            console.error("[FAIL] Draft not received by User B when both opted in!");
         }
 
         // TEST 4: Throttle Protection (150ms)
@@ -126,9 +126,9 @@ async function runLiveTypingTests() {
 
         console.log(`Sent 20 rapid emits. User B received: ${emitCount} events.`);
         if (emitCount < 5) {
-            console.log("✅ PASSED: Rapid emissions throttled effectively by server.");
+            console.log("[PASS] Rapid emissions throttled effectively by server.");
         } else {
-            console.error(`❌ FAILED: Throttle failed! Received ${emitCount} events.`);
+            console.error(`[FAIL] Throttle failed! Received ${emitCount} events.`);
         }
 
         // TEST 5: Text Length Truncation (Max 500 chars)
@@ -142,9 +142,9 @@ async function runLiveTypingTests() {
         await new Promise(r => setTimeout(r, 400));
 
         if (truncatedResult && truncatedResult.length === 500) {
-            console.log(`✅ PASSED: Draft text truncated to exactly 500 characters (sent 750).`);
+            console.log(`[PASS] Draft text truncated to exactly 500 characters (sent 750).`);
         } else {
-            console.error(`❌ FAILED: Truncation failed! Received length: ${truncatedResult ? truncatedResult.length : 0}`);
+            console.error(`[FAIL] Truncation failed! Received length: ${truncatedResult ? truncatedResult.length : 0}`);
         }
 
         // TEST 6: Mid-Draft Toggle Invalidation
@@ -159,9 +159,9 @@ async function runLiveTypingTests() {
         await new Promise(r => setTimeout(r, 400));
 
         if (stoppedReceived || statusChangedReceived) {
-            console.log("✅ PASSED: Mid-draft toggle instantly invalidated session and notified room.");
+            console.log("[PASS] Mid-draft toggle instantly invalidated session and notified room.");
         } else {
-            console.error("❌ FAILED: Invalidation event not received by peer!");
+            console.error("[FAIL] Invalidation event not received by peer!");
         }
 
         // Cleanup Sockets
@@ -183,9 +183,9 @@ async function runLiveTypingTests() {
                 if (err) {
                     console.error("Error querying DB for persistence check:", err);
                 } else if (rows.length === 0) {
-                    console.log(`✅ PASSED: Zero persistence audit confirmed 0 occurrences of secret marker "${UNIQUE_SECRET_MARKER}" in SQLite database.`);
+                    console.log(`[PASS] Zero persistence audit confirmed 0 occurrences of secret marker "${UNIQUE_SECRET_MARKER}" in SQLite database.`);
                 } else {
-                    console.error(`❌ CRITICAL SECURITY FAILURE: Found ${rows.length} occurrences of secret draft marker in DB!`, rows);
+                    console.error(`[FAIL] CRITICAL SECURITY FAILURE: Found ${rows.length} occurrences of secret draft marker in DB!`, rows);
                 }
                 db.close();
                 resolve();
@@ -193,11 +193,11 @@ async function runLiveTypingTests() {
         });
 
         console.log("\n==================================================");
-        console.log("🎉 ALL LIVE TYPING TESTS COMPLETED SUCCESSFULLY!");
+        console.log("ALL LIVE TYPING TESTS COMPLETED SUCCESSFULLY!");
         console.log("==================================================");
 
     } catch (err) {
-        console.error("❌ Test script error:", err.response ? err.response.data : err.message);
+        console.error("[FAIL] Test script error:", err.response ? err.response.data : err.message);
         process.exit(1);
     }
 }

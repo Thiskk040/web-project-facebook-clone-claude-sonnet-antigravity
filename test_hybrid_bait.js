@@ -31,7 +31,7 @@ setTimeout(async () => {
     const hasApiKey = !!process.env.GEMINI_API_KEY;
     console.log(`GEMINI_API_KEY configured: ${hasApiKey ? "YES" : "NO"}`);
     if (!hasApiKey) {
-        console.log("⚠️ WARNING: GEMINI_API_KEY is not set. Fallback tests will return 0 score.");
+        console.log("[WARNING] GEMINI_API_KEY is not set. Fallback tests will return 0 score.");
     }
 
     for (let i = 0; i < testCases.length; i++) {

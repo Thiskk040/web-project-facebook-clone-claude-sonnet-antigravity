@@ -83,14 +83,14 @@ setTimeout(async () => {
         if (isSuccess) {
             passed++;
         }
-        console.log(`Test #${idx + 1}: ${isSuccess ? "✅ PASSED" : "❌ FAILED"}`);
+        console.log(`Test #${idx + 1}: ${isSuccess ? "[PASS]" : "[FAIL]"}`);
         console.log(`  Text: "${tc.text}"`);
         console.log(`  Score: ${res.score}% | Matches: [${(res.translations || []).join(', ')}]`);
     }
 
     console.log(`\nResults: Passed ${passed}/${testCases.length}`);
     if (passed === testCases.length) {
-        console.log("🎉 ALL TESTS PASSED SUCCESSFULLY!");
+        console.log("[SUCCESS] ALL TESTS PASSED SUCCESSFULLY!");
     } else {
         process.exit(1);
     }

@@ -74,10 +74,15 @@ router.get('/:username/friends', authenticateToken, (req, res) => {
     });
 });
 
-router.put('/me/profile', authenticateToken, upload.fields([{name: 'cover_photo', maxCount: 1}, {name: 'profile_picture', maxCount: 1}]), (req, res) => {
+router.put('/me/profile', authenticateToken, upload.fields([{name: 'cover_photo', maxCount: 1}, {name: 'profile_picture', maxCount: 1}]), upload.validateImageMagicBytes, (req, res) => {
     const { bio } = req.body;
-    let coverUrl = req.files && req.files['cover_photo'] ? `/uploads/${req.files['cover_photo'][0].filename}` : req.body.cover_photo;
-    let avatarUrl = req.files && req.files['profile_picture'] ? `/uploads/${req.files['profile_picture'][0].filename}` : req.body.profile_picture;
+    const isValidLocalPath = (str) => typeof str === 'string' && (str.startsWith('/uploads/') || str === '');
+    let coverUrl = req.files && req.files['cover_photo'] 
+        ? `/uploads/${req.files['cover_photo'][0].filename}` 
+        : (isValidLocalPath(req.body.cover_photo) ? req.body.cover_photo : null);
+    let avatarUrl = req.files && req.files['profile_picture'] 
+        ? `/uploads/${req.files['profile_picture'][0].filename}` 
+        : (isValidLocalPath(req.body.profile_picture) ? req.body.profile_picture : null);
     
     db.run("UPDATE users SET bio = COALESCE(?, bio), cover_photo = COALESCE(?, cover_photo), profile_picture = COALESCE(?, profile_picture) WHERE id = ?", [bio, coverUrl, avatarUrl, req.user.id], function(err) {
         if (err) return res.status(500).json({ error: "Update failed" });

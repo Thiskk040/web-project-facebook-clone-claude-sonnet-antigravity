@@ -258,6 +258,27 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Unified Express & Socket.io Origin Binding:** Bound both Express middleware (`app.use(cors(corsOptions))`) and Socket.io server (`new Server(httpServer, { cors: { origin: allowedOrigins, credentials: true } })`) to the exact same `allowedOrigins` array, eliminating wildcard `*` access vulnerabilities.
 - **Empirical Verification:** Conducted live curl preflight tests confirming HTTP 500 / zero `Access-Control-Allow-Origin` header for unauthorized origins (e.g. `http://malicious-site.com`), valid `Access-Control-Allow-Origin: http://localhost:5173` headers for authorized origins, and clean socket handshake routing.
 
+### 20. Security Hardening Batch — 5 Critical Security Fixes (`socketHandler.js`, `userRoutes.js`, `upload.js`, `server.js`)
+1. **Live Typing Unauthorized Room Join & Eavesdropping Prevention (`socketHandler.js`):**
+   - Eliminated client-supplied `roomId` parameters across `join_room`, `typing_draft`, and `typing_stopped` socket events.
+   - Enforced server-calculated room IDs (`chat_${min}_${max}`) based strictly on authenticated JWT user ID (`socket.user.id`) and target user ID.
+   - Added mandatory database friendship verification (`friendships` table `status = 'accepted'`) before granting room access or emitting draft events, preventing unauthorized eavesdropping.
+2. **Tracking Pixel Guard (`routes/userRoutes.js`):**
+   - Implemented `isValidLocalPath` URL validation for `cover_photo` and `profile_picture` payload updates in `PUT /users/me/profile`. External tracking pixel URLs (e.g. `http://attacker.com/pixel.png`) are rejected and ignored.
+3. **Magic Byte Upload Validation (`config/upload.js`):**
+   - Implemented post-save magic byte signature checks inspecting the first 12 bytes of uploaded files.
+   - Strictly validates PNG (`89 50 4E 47`), JPEG (`FF D8 FF`), GIF (`47 49 46 38`), and WEBP (`RIFF` + `WEBP` only, excluding audio WAVE). Disguised files (e.g. `.txt` renamed to `.jpg`) are automatically deleted from disk via `fs.unlinkSync` and returned with HTTP 400 Bad Request.
+4. **Helmet HTTP Security Headers (`server.js`, `package.json`):**
+   - Integrated `helmet` middleware (`app.use(helmet())`) to inject protection headers including `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, and `X-DNS-Prefetch-Control`.
+5. **JWT_SECRET Startup Fail-Fast Check (`server.js`):**
+   - Implemented an immediate startup check validating `process.env.JWT_SECRET`. If missing, logs a `FATAL` error and exits the process (`exit code 1`).
+6. **Automated Verification Suite (`scratch/test_hardening.js`):**
+   - Validated 100% test pass rate across eavesdropping prevention, tracking pixel rejection, magic byte enforcement, helmet response headers, and fail-fast startup behavior.
+
+### 21. Emoji Removal & Code Clean Formatting Refactor (`FeedPage.jsx`, test scripts)
+- **Zero Emoji Compliance:** Scanned and purged all unicode emojis across JS/JSX source and test files. Replaced UI modal symbols with clean Lucide icons (`<Mail />`, `<X />`) and console test logs with standard bracket tags (`[PASS]`, `[FAIL]`, `[INFO]`).
+- **Clean Code & Maintainability Formatting:** Standardized formatting, imports, and component layout for improved long-term codebase maintainability. Verified clean production build (`npm run build`).
+
 ---
 
 

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle, Sparkles, Megaphone } from 'lucide-react';
+import { Image, Send, Heart, LogOut, MessageSquare, Trash2, Bell, Check, UserPlus, Users, MessageCircle, Sparkles, Megaphone, Mail, X } from 'lucide-react';
 import Navbar from './Navbar';
 import { getAvatarGradient } from './utils/avatarGradient';
 
@@ -708,10 +708,10 @@ export default function FeedPage() {
                                 cursor: 'pointer'
                             }}
                         >
-                            ✕
+                            <X size={18} />
                         </button>
-                        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-main)', fontSize: 'var(--text-lg)' }}>
-                            📧 Add Recovery Email
+                        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-main)', fontSize: 'var(--text-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Mail size={20} /> Add Recovery Email
                         </h3>
                         <p style={{ margin: '0 0 16px 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)', lineHeight: '1.5' }}>
                             Your account does not have a recovery email yet. If you forget your password, you will not be able to recover your account. Add an email now for maximum security (optional).

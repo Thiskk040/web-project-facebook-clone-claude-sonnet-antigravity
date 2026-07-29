@@ -1,4 +1,10 @@
 require('dotenv').config();
+
+if (!process.env.JWT_SECRET) {
+    console.error("FATAL: JWT_SECRET is not set. Server will not start.");
+    process.exit(1);
+}
+
 const cluster = require("cluster");
 const http = require("http");
 const { setupMaster, setupWorker } = require("@socket.io/sticky");
@@ -38,11 +44,12 @@ if (cluster.isPrimary) {
     // Worker processes
     const express = require('express');
     const cors = require('cors');
+    const helmet = require('helmet');
     const path = require('path');
     const { Server } = require("socket.io");
-    require('dotenv').config();
     
     const app = express();
+    app.use(helmet());
     const httpServer = http.createServer(app);
     
     const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
