@@ -45,12 +45,27 @@ if (cluster.isPrimary) {
     const app = express();
     const httpServer = http.createServer(app);
     
-    app.use(cors());
+    const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+        .split(',')
+        .map(o => o.trim());
+
+    const corsOptions = {
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('CORS policy violation: Access denied'));
+            }
+        },
+        credentials: true
+    };
+
+    app.use(cors(corsOptions));
     app.use(express.json());
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
     
     const io = new Server(httpServer, {
-        cors: { origin: '*' }
+        cors: { origin: allowedOrigins, credentials: true }
     });
     
     // use the cluster adapter so io.emit goes to all workers

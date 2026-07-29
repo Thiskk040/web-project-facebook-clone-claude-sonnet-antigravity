@@ -253,6 +253,11 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
   - Rendered peer draft bubbles separately at the bottom of the chat list with translucent dashed glass styling (`font-style: italic`, muted text color).
 - **Automated Verification Suite (`test_live_typing.js`):** Created full automated test suite verifying dual opt-in blocking, 150ms throttling, 500-char truncation, mid-draft toggle invalidation, and **Concrete Zero DB Persistence Audit** (confirming 0 occurrences of draft text in SQLite database).
 
+### 19. Strict CORS Policy Implementation & Socket.io Origin Restriction (`server.js`, `.env`)
+- **Strict Allowed Origins Configuration:** Configured CORS options using `process.env.FRONTEND_URL` (defaulting to `http://localhost:5173`) with support for comma-separated multiple origins and `credentials: true`.
+- **Unified Express & Socket.io Origin Binding:** Bound both Express middleware (`app.use(cors(corsOptions))`) and Socket.io server (`new Server(httpServer, { cors: { origin: allowedOrigins, credentials: true } })`) to the exact same `allowedOrigins` array, eliminating wildcard `*` access vulnerabilities.
+- **Empirical Verification:** Conducted live curl preflight tests confirming HTTP 500 / zero `Access-Control-Allow-Origin` header for unauthorized origins (e.g. `http://malicious-site.com`), valid `Access-Control-Allow-Origin: http://localhost:5173` headers for authorized origins, and clean socket handshake routing.
+
 ---
 
 
