@@ -1,8 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const db = require('../config/database');
 const upload = require('../config/upload');
 const { authenticateToken } = require('../middleware/auth');
+const { sendEmailVerificationEmail } = require('../utils/mailer');
 
 const router = express.Router();
 
@@ -192,9 +194,27 @@ router.put('/me/email', authenticateToken, (req, res) => {
             if (err) throw err;
             if (existing) return res.status(400).json({ error: "Email is already in use by another account" });
 
-            db.run("UPDATE users SET email = ?, email_verified = 1 WHERE id = ?", [cleanEmail, req.user.id], function(err) {
+            db.run("UPDATE users SET email = ?, email_verified = 0 WHERE id = ?", [cleanEmail, req.user.id], function(err) {
                 if (err) return res.status(500).json({ error: "Failed to update email" });
-                res.json({ message: "Email updated successfully", email: cleanEmail });
+
+                // Invalidate older unused verification tokens for this user
+                db.run("UPDATE email_verifications SET used = 1 WHERE user_id = ? AND used = 0", [req.user.id], () => {
+                    const rawToken = crypto.randomBytes(32).toString('hex');
+                    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+                    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+                    db.run(
+                        "INSERT INTO email_verifications (token_hash, user_id, email, expires_at, used, created_at) VALUES (?, ?, ?, ?, 0, ?)",
+                        [tokenHash, req.user.id, cleanEmail, expiresAt, Date.now()],
+                        (err) => {
+                            if (err) console.error("[EmailVerify DB Error]", err);
+                            setImmediate(() => {
+                                sendEmailVerificationEmail(cleanEmail, rawToken).catch(err => console.error("[EmailVerify Mailer Error]", err));
+                            });
+                            res.json({ message: "Email updated. Please check your inbox to verify.", email: cleanEmail, email_verified: false });
+                        }
+                    );
+                });
             });
         });
     });

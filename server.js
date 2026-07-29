@@ -87,6 +87,9 @@ if (cluster.isPrimary) {
     
     // Register Routes
     app.use('/auth', require('./routes/authRoutes'));
+    app.use('/auth', require('./routes/twoFactorRoutes'));
+    app.use('/auth', require('./routes/passwordResetRoutes'));
+    app.use('/auth', require('./routes/emailVerifyRoutes'));
     app.use('/posts', require('./routes/postRoutes'));
     app.use('/interactions', require('./routes/interactionRoutes'));
     app.use('/comments', require('./routes/commentRoutes'));

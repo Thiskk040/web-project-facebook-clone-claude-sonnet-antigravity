@@ -279,6 +279,20 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Zero Emoji Compliance:** Scanned and purged all unicode emojis across JS/JSX source and test files. Replaced UI modal symbols with clean Lucide icons (`<Mail />`, `<X />`) and console test logs with standard bracket tags (`[PASS]`, `[FAIL]`, `[INFO]`).
 - **Clean Code & Maintainability Formatting:** Standardized formatting, imports, and component layout for improved long-term codebase maintainability. Verified clean production build (`npm run build`).
 
+### 22. Email Verification Bypass Fix (`routes/userRoutes.js`, `routes/authRoutes.js`, `config/database.js`)
+- **Strict Unverified Status Enforcement:** Updated `PUT /users/me/email` to update email addresses with `email_verified = 0`, invalidating older unused verification tokens and issuing a 24-hour CSPRNG verification token (`sendEmailVerificationEmail`).
+- **Password Reset Protection for Unverified Emails:** Enforced `email_verified == 1` check in `POST /auth/forgot-password`. Requests with unverified emails return standard `UNIFORM_MESSAGE` without creating reset tokens or sending emails.
+- **Empirical Verification (`scratch/test_email_verify_fix.js`):** Confirmed `email_verified = 0` upon update, verified token activation to `email_verified = 1` on verification link click, blocked forgot-password resets on unverified emails, and confirmed uninterrupted login for unverified accounts.
+
+### 23. Modular Auth Routes Refactor & Shared Auth Helpers (`utils/authHelpers.js`, `routes/`)
+- **Shared Auth Helpers (`utils/authHelpers.js`):** Extracted `checkOtpRateLimit`, `issueAuthToken`, and `asyncHandler` into a centralized helper module, eliminating code duplication across authentication flows.
+- **Modular Route File Decomposition (`routes/`):** Decomposed monolithic `authRoutes.js` into targeted route modules mounted at `/auth`:
+  - `routes/authRoutes.js` (Core registration initialization & login)
+  - `routes/twoFactorRoutes.js` (2FA registration verification, resend, 2FA login & 2FA reset verification)
+  - `routes/passwordResetRoutes.js` (Forgot password & password reset step 1)
+  - `routes/emailVerifyRoutes.js` (Email verification token confirmation)
+- **Zero API Contract Mutation:** Maintained 100% endpoint URL and payload compatibility across all 4 mounted route files (`/auth/*`). Verified 100% pass rate across `test_2fa.js`, `test_forgot_password.js`, `test_email_verify_fix.js`, and `test_hardening.js`.
+
 ---
 
 

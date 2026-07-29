@@ -56,6 +56,9 @@ db.serialize(() => {
         used INTEGER DEFAULT 0,
         created_at INTEGER
     )`);
+    db.run(`ALTER TABLE email_verifications ADD COLUMN email TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS otp_attempts (
         key TEXT PRIMARY KEY,
