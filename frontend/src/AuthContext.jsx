@@ -22,8 +22,8 @@ export const AuthProvider = ({ children }) => {
         completeSession(res.data.token, res.data.user);
     };
 
-    const registerInit = async (username, password) => {
-        const res = await axios.post('http://localhost:3000/auth/register-init', { username, password });
+    const registerInit = async (username, password, email) => {
+        const res = await axios.post('http://localhost:3000/auth/register-init', { username, password, email });
         return res.data; // { tempToken, qrCodeUrl, secretKey }
     };
 
@@ -35,6 +35,31 @@ export const AuthProvider = ({ children }) => {
     const registerVerify2FA = async (tempToken, code) => {
         const res = await axios.post('http://localhost:3000/auth/register-verify-2fa', { tempToken, code });
         completeSession(res.data.token, res.data.user);
+    };
+
+    const forgotPassword = async (email) => {
+        const res = await axios.post('http://localhost:3000/auth/forgot-password', { email });
+        return res.data;
+    };
+
+    const resetPassword = async (token, newPassword) => {
+        const res = await axios.post('http://localhost:3000/auth/reset-password', { token, newPassword });
+        return res.data;
+    };
+
+    const resetPasswordVerify2FA = async (resetSessionToken, code) => {
+        const res = await axios.post('http://localhost:3000/auth/reset-password-verify-2fa', { resetSessionToken, code });
+        return res.data;
+    };
+
+    const updateUserEmail = async (currentPassword, newEmail) => {
+        const res = await axios.put(
+            'http://localhost:3000/users/me/email',
+            { currentPassword, newEmail },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        updateUser({ email: res.data.email });
+        return res.data;
     };
 
     const completeSession = (newToken, newUser) => {
@@ -69,6 +94,10 @@ export const AuthProvider = ({ children }) => {
             registerInit, 
             registerResend2FA, 
             registerVerify2FA, 
+            forgotPassword,
+            resetPassword,
+            resetPasswordVerify2FA,
+            updateUserEmail,
             logout, 
             updateUser 
         }}>

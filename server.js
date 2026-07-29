@@ -1,3 +1,4 @@
+require('dotenv').config();
 const cluster = require("cluster");
 const http = require("http");
 const { setupMaster, setupWorker } = require("@socket.io/sticky");

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Glaze Signature Liquid Gradient -->
+    <linearGradient id="glaze-liquid-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd6e8"/>
+      <stop offset="45%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#9ad4ff"/>
+    </linearGradient>
+
+    <!-- Glass Surface Gradient Sheen -->
+    <linearGradient id="glaze-glass-sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Outer Rim Glow Filter -->
+    <filter id="glaze-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="24" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Inner Shadow / Refraction Light -->
+    <linearGradient id="glaze-rim-light" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#9ad4ff" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ambient Glow Behind Capsule -->
+  <circle cx="256" cy="256" r="210" fill="url(#glaze-liquid-grad)" opacity="0.35" filter="url(#glaze-glow)" />
+
+  <!-- Outer Glass Capsule Body -->
+  <circle cx="256" cy="256" r="224" fill="#161224" stroke="url(#glaze-rim-light)" stroke-width="4" opacity="0.95" />
+
+  <!-- Inner Liquid Core -->
+  <circle cx="256" cy="256" r="165" fill="url(#glaze-liquid-grad)" opacity="0.9" />
+
+  <!-- Glass Specular Refraction Top Arc -->
+  <path d="M 52 256 A 204 204 0 0 1 460 256 A 204 160 0 0 0 52 256 Z" fill="url(#glaze-glass-sheen)" opacity="0.75" />
+
+  <!-- Center 4-Point Optics Sparkle Symbol -->
+  <path d="M 256 128 L 284 228 L 384 256 L 284 284 L 256 384 L 228 284 L 128 256 L 228 228 Z" fill="#100e0c" opacity="0.92" />
+</svg>

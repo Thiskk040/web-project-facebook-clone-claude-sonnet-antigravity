@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="800" height="240">
+  <defs>
+    <!-- Liquid Gradient -->
+    <linearGradient id="dark-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd6e8"/>
+      <stop offset="45%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#9ad4ff"/>
+    </linearGradient>
+    
+    <!-- Wordmark Dark Text Gradient -->
+    <linearGradient id="wordmark-dark-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="35%" stop-color="#ffd6e8"/>
+      <stop offset="70%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#9ad4ff"/>
+    </linearGradient>
+
+    <!-- Glass Sheen -->
+    <linearGradient id="sheen-dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background (Optional / Container preview) -->
+  <rect width="800" height="240" rx="24" fill="#0d0b14"/>
+
+  <!-- Icon Mark (Centered at X=130, Y=120, R=80) -->
+  <g transform="translate(50, 40)">
+    <circle cx="80" cy="80" r="76" fill="#1a152e" stroke="rgba(255,255,255,0.4)" stroke-width="2" />
+    <circle cx="80" cy="80" r="56" fill="url(#dark-grad)" />
+    <path d="M 12 80 A 68 68 0 0 1 148 80 A 68 50 0 0 0 12 80 Z" fill="url(#sheen-dark)" opacity="0.7" />
+    <path d="M 80 38 L 90 70 L 122 80 L 90 90 L 80 122 L 70 90 L 38 80 L 70 70 Z" fill="#100e0c" opacity="0.9" />
+  </g>
+
+  <!-- Wordmark Text "glaze" -->
+  <text x="250" y="152" 
+        fill="url(#wordmark-dark-grad)" 
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif" 
+        font-size="112" 
+        font-weight="700" 
+        letter-spacing="-0.04em">glaze</text>
+</svg>

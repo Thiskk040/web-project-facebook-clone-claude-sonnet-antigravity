@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import AuthPage from './AuthPage';
+import ResetPasswordPage from './ResetPasswordPage';
 import FeedPage from './FeedPage';
 import ProfilePage from './ProfilePage';
 import MessagesPage from './MessagesPage';
@@ -23,6 +24,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={token ? <Navigate to="/" /> : <AuthPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
       <Route path="/profile/:username" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />

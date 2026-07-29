@@ -417,30 +417,30 @@ export default function ProfilePage() {
                             <Sparkles size={32} />
                         </div>
                         <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                            วิเคราะห์การประจบอวดอ้าง (Glaze Analysis)
+                            Glaze Analysis
                         </h2>
                         <div style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-bold)', color: 'var(--text-secondary)' }}>
-                            ระดับความ Glaze: <span style={{ color: 'var(--accent)' }}>{activeRoast.score}% Glaze</span>
+                            Glaze Level: <span style={{ color: 'var(--accent)' }}>{activeRoast.score}% Glaze</span>
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', textAlign: 'left' }}>
-                            <p style={{ margin: '0 0 8px 0', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 'var(--font-semibold)' }}>โพสต์ดั้งเดิม:</p>
+                            <p style={{ margin: '0 0 8px 0', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 'var(--font-semibold)' }}>Original Post:</p>
                             <blockquote style={{ margin: 0, paddingLeft: '12px', borderLeft: '3px solid var(--accent)', fontStyle: 'italic', color: 'var(--text-main)', fontSize: 'var(--text-base)' }}>
                                 "{activeRoast.content}"
                             </blockquote>
                         </div>
 
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>Subtext / Meaning:</p>
                             <p style={{ margin: 0, fontWeight: 'var(--font-bold)', fontSize: 'var(--text-base)', color: 'var(--text-main)' }}>
                                 {activeRoast.translation}
                             </p>
                         </div>
 
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(201, 182, 255, 0.1)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>Savage Roast:</p>
                             <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--text-main)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
-                                {activeRoast.roasts || "คนปกติเขาอ่านแล้วไม่มีอะไรเลย นอกจากความว่างเปล่าและความคิดในหัวของคุณ"}
+                                {activeRoast.roasts || "Nothing here but pure emptiness and clout chasing."}
                             </p>
                         </div>
 
@@ -455,7 +455,7 @@ export default function ProfilePage() {
                                 fontSize: 'var(--text-sm)'
                             }}
                         >
-                            ยอมรับความจริงแล้วปิดหน้าต่างนี้ (Accept Reality)
+                            Accept Reality & Close
                         </button>
                     </div>
                 </div>

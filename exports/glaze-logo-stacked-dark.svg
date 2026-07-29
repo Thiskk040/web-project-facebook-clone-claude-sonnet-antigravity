@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="stacked-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd6e8"/>
+      <stop offset="45%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#9ad4ff"/>
+    </linearGradient>
+
+    <linearGradient id="stacked-wordmark-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#ffd6e8"/>
+      <stop offset="70%" stop-color="#c9b6ff"/>
+      <stop offset="100%" stop-color="#9ad4ff"/>
+    </linearGradient>
+
+    <linearGradient id="stacked-sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="32" fill="#0b0914"/>
+
+  <!-- Centered Icon Mark -->
+  <g transform="translate(144, 50)">
+    <circle cx="112" cy="112" r="108" fill="#161224" stroke="rgba(255,255,255,0.3)" stroke-width="3" />
+    <circle cx="112" cy="112" r="80" fill="url(#stacked-grad)" />
+    <path d="M 16 112 A 96 96 0 0 1 208 112 A 96 70 0 0 0 16 112 Z" fill="url(#stacked-sheen)" opacity="0.7" />
+    <path d="M 112 52 L 126 98 L 172 112 L 126 126 L 112 172 L 98 126 L 52 112 L 98 98 Z" fill="#100e0c" opacity="0.9" />
+  </g>
+
+  <!-- Centered Wordmark Text -->
+  <text x="256" y="380" 
+        text-anchor="middle"
+        fill="url(#stacked-wordmark-grad)" 
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif" 
+        font-size="96" 
+        font-weight="700" 
+        letter-spacing="-0.04em">glaze</text>
+</svg>

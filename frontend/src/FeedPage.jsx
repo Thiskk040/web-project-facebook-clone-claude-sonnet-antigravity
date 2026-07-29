@@ -13,61 +13,85 @@ const fakeAds = [
     {
         id: 'ad-1',
         title: "Nobody",
-        content: "Sponsored by: Nobody. This is just a reminder to drink water.",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Sponsored by: Nobody. This is just a friendly reminder to drink a glass of water right now.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-2',
         title: "Your Future Self",
-        content: "Sponsored by: Your Future Self. Go to sleep before 1 AM tonight. Seriously, scrolling won't make you happier.",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Sponsored by: Your Future Self. Go to sleep before 1 AM tonight. Seriously, doom-scrolling won't make you happier.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-3',
         title: "Office Worker Association",
-        content: "Ad · กด Skip ไม่ได้เพราะมันไม่ใช่โฆษณาจริง มันคือการเตือนให้ลุกไปยืดเส้นยืดสาย สูดหายใจเข้าลึกๆ 5 วินาที",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Ad · Cannot skip because this isn't a real ad. It's a reminder to stretch your spine and take a 5-second deep breath.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-4',
         title: "Orthopedic Surgeon",
-        content: "Sponsored: ก้มหัวเล่นมือถือแบบนี้ หมอนรองกระดูกคอขอร้องไห้ กรุณาปรับระดับสายตาขึ้นมา 10 องศาด้วยครับ",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Sponsored: Looking down at your phone like this makes your neck spine cry. Please raise your screen angle by 10 degrees.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-5',
         title: "Blink Warning System",
-        content: "Ad · ตาคุณแห้งแล้วนะจ๊ะ กรุณากะพริบตาถี่ๆ 5 ครั้ง หรือละสายตาไปมองต้นไม้สีเขียวนอกหน้าต่างสัก 10 วินาที",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Ad · Your eyes are getting dry. Please blink rapidly 5 times or look at a distant green tree for 10 seconds.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-6',
         title: "Your Bank Account",
-        content: "Sponsored: เงินในบัญชีเตือนว่า ไม่มีความจำเป็นต้องซื้อของชิ้นถ้าปในตะกร้าสินค้า ปิดแอปช็อปปิ้งแล้วไปนอนซะ",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Sponsored: Your bank account warns that you do not need that item in your shopping cart. Close the app and sleep.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-7',
         title: "Social Media Detox Dept.",
-        content: "Ad · คุณไถฟีดมานานเกินไปแล้ว เพื่อสุขภาพจิตที่ดี ลองปิดหน้าจอนี้แล้วคุยกับคนข้างๆ หรือหมาแมวสักครู่",
-        badge: "Sponsored (ล้อเลียน)"
+        content: "Ad · You have been scrolling for too long. For your mental health, try closing this screen and talking to a real human or pet.",
+        badge: "Sponsored (Parody)"
     },
     {
         id: 'ad-8',
         title: "The Air Quality Monitor",
         content: "Sponsored by: The Universe. Take a deep breath. Exhale. You are doing fine. Now go get some actual oxygen.",
-        badge: "Sponsored (ล้อเลียน)"
+        badge: "Sponsored (Parody)"
     }
 ];
 
 export default function FeedPage() {
-    const { token, user, logout } = useAuth();
+    const { token, user, logout, updateUserEmail } = useAuth();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
     const [toast, setToast] = useState('');
     
+    // Email Prompt Modal State for legacy users without email
+    const [showEmailModal, setShowEmailModal] = useState(!user?.email);
+    const [promptEmail, setPromptEmail] = useState('');
+    const [promptCurrentPassword, setPromptCurrentPassword] = useState('');
+    const [promptError, setPromptError] = useState('');
+    const [promptLoading, setPromptLoading] = useState(false);
+    const [promptSuccessMsg, setPromptSuccessMsg] = useState('');
+
+    const handlePromptEmailSubmit = async (e) => {
+        e.preventDefault();
+        setPromptError('');
+        setPromptSuccessMsg('');
+        setPromptLoading(true);
+        try {
+            await updateUserEmail(promptCurrentPassword, promptEmail);
+            setPromptSuccessMsg('Email updated successfully!');
+            setTimeout(() => setShowEmailModal(false), 1500);
+        } catch (err) {
+            setPromptError(err.response?.data?.error || 'Failed to update email');
+        } finally {
+            setPromptLoading(false);
+        }
+    };
+
     // New Feature States
     const [suggestedUsers, setSuggestedUsers] = useState([]);
     const [friendRequests, setFriendRequests] = useState([]);
@@ -489,7 +513,7 @@ export default function FeedPage() {
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                             <span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', color: 'var(--warning)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                                <Megaphone size={14} /> โฆษณาเตือนใจ (Unskippable Wellness Warning)
+                                                <Megaphone size={14} /> Unskippable Wellness Warning
                                             </span>
                                             <span style={{ fontSize: 'var(--text-xs)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(217, 119, 6, 0.15)', color: 'var(--warning)', fontWeight: 'var(--font-bold)' }}>
                                                 {ad.badge}
@@ -601,30 +625,30 @@ export default function FeedPage() {
                             <Sparkles size={32} />
                         </div>
                         <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                            วิเคราะห์การประจบอวดอ้าง (Glaze Analysis)
+                            Glaze Analysis
                         </h2>
                         <div style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-bold)', color: 'var(--text-secondary)' }}>
-                            ระดับความ Glaze: <span style={{ color: 'var(--accent)' }}>{activeRoast.score}% Glaze</span>
+                            Glaze Level: <span style={{ color: 'var(--accent)' }}>{activeRoast.score}% Glaze</span>
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '16px 0', textAlign: 'left' }}>
-                            <p style={{ margin: '0 0 8px 0', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 'var(--font-semibold)' }}>โพสต์ดั้งเดิม:</p>
+                            <p style={{ margin: '0 0 8px 0', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', fontWeight: 'var(--font-semibold)' }}>Original Post:</p>
                             <blockquote style={{ margin: 0, paddingLeft: '12px', borderLeft: '3px solid var(--accent)', fontStyle: 'italic', color: 'var(--text-main)', fontSize: 'var(--text-base)' }}>
                                 "{activeRoast.content}"
                             </blockquote>
                         </div>
 
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>แปลไทยเป็นไทย (ความนัย):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>Subtext / Meaning:</p>
                             <p style={{ margin: 0, fontWeight: 'var(--font-bold)', fontSize: 'var(--text-base)', color: 'var(--text-main)' }}>
                                 {activeRoast.translation}
                             </p>
                         </div>
 
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(201, 182, 255, 0.1)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>บทวิเคราะห์ดึงสติ (Savage Roast):</p>
+                            <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--accent)', fontWeight: 'var(--font-semibold)' }}>Savage Roast:</p>
                             <p style={{ margin: 0, fontSize: 'var(--text-base)', color: 'var(--text-main)', lineHeight: 'var(--leading-normal)', fontWeight: 'var(--font-medium)' }}>
-                                {activeRoast.roasts || "คนปกติเขาอ่านแล้วไม่มีอะไรเลย นอกจากความว่างเปล่าและความคิดในหัวของคุณ"}
+                                {activeRoast.roasts || "Nothing here but pure emptiness and clout chasing."}
                             </p>
                         </div>
 
@@ -639,8 +663,104 @@ export default function FeedPage() {
                                 fontSize: 'var(--text-sm)'
                             }}
                         >
-                            ยอมรับความจริงแล้วปิดหน้าต่างนี้ (Accept Reality)
+                            Accept Reality & Close
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Dismissible Email Recovery Modal for Legacy Accounts */}
+            {showEmailModal && !user?.email && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    zIndex: 1000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        background: 'var(--surface-1)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '24px',
+                        maxWidth: '440px',
+                        width: '100%',
+                        position: 'relative',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                    }}>
+                        <button 
+                            onClick={() => setShowEmailModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '16px',
+                                right: '16px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-tertiary)',
+                                fontSize: '18px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            ✕
+                        </button>
+                        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-main)', fontSize: 'var(--text-lg)' }}>
+                            📧 Add Recovery Email
+                        </h3>
+                        <p style={{ margin: '0 0 16px 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)', lineHeight: '1.5' }}>
+                            Your account does not have a recovery email yet. If you forget your password, you will not be able to recover your account. Add an email now for maximum security (optional).
+                        </p>
+
+                        {promptError && <div style={{ color: 'var(--danger)', marginBottom: '12px', fontSize: 'var(--text-xs)', fontWeight: 'bold' }}>{promptError}</div>}
+                        {promptSuccessMsg && <div style={{ color: '#10b981', marginBottom: '12px', fontSize: 'var(--text-xs)', fontWeight: 'bold' }}>{promptSuccessMsg}</div>}
+
+                        <form onSubmit={handlePromptEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <input 
+                                type="email" 
+                                placeholder="Recovery Email Address" 
+                                required
+                                value={promptEmail}
+                                onChange={e => setPromptEmail(e.target.value)}
+                            />
+                            <input 
+                                type="password" 
+                                placeholder="Current Password (For Verification)" 
+                                required
+                                value={promptCurrentPassword}
+                                onChange={e => setPromptCurrentPassword(e.target.value)}
+                            />
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowEmailModal(false)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '10px',
+                                        borderRadius: 'var(--radius-sm)',
+                                        border: '1px solid var(--border-subtle)',
+                                        background: 'transparent',
+                                        color: 'var(--text-secondary)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Skip for Now
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="btn-glaze" 
+                                    disabled={promptLoading}
+                                    style={{ flex: 1, padding: '10px' }}
+                                >
+                                    Save Email
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

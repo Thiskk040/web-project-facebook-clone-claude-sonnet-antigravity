@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
-import { LogIn, UserPlus, CheckCircle2, ShieldCheck, Zap, KeyRound, RefreshCw, ArrowLeft } from 'lucide-react';
+import { LogIn, UserPlus, CheckCircle2, ShieldCheck, Zap, KeyRound, RefreshCw, ArrowLeft, Mail, Send } from 'lucide-react';
 import GlazeLogo from './GlazeLogo';
 import AntigravityCanvas from './AntigravityCanvas';
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
+    const [isForgotPw, setIsForgotPw] = useState(false);
     const [step, setStep] = useState(1); // 1: Form, 2: 2FA Verification
     
     // Form Inputs
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
     const [otpCode, setOtpCode] = useState('');
     
     // 2FA Setup State
@@ -20,12 +22,14 @@ export default function AuthPage() {
     const [loginTempToken, setLoginTempToken] = useState('');
     
     const [error, setError] = useState('');
+    const [infoMsg, setInfoMsg] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, verifyLogin2FA, registerInit, registerResend2FA, registerVerify2FA } = useAuth();
+    const { login, verifyLogin2FA, registerInit, registerResend2FA, registerVerify2FA, forgotPassword } = useAuth();
 
     const handleInitialSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setInfoMsg('');
         setLoading(true);
         try {
             if (isLogin) {
@@ -35,7 +39,7 @@ export default function AuthPage() {
                     setStep(2);
                 }
             } else {
-                const res = await registerInit(username, password);
+                const res = await registerInit(username, password, email);
                 setTempToken(res.tempToken);
                 setQrCodeUrl(res.qrCodeUrl);
                 setSecretKey(res.secretKey);
@@ -43,6 +47,21 @@ export default function AuthPage() {
             }
         } catch (err) {
             setError(err.response?.data?.error || 'Something went wrong');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForgotPwSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setInfoMsg('');
+        setLoading(true);
+        try {
+            const res = await forgotPassword(email);
+            setInfoMsg(res.message);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to process request');
         } finally {
             setLoading(false);
         }
@@ -85,7 +104,9 @@ export default function AuthPage() {
 
     const resetFlow = () => {
         setStep(1);
+        setIsForgotPw(false);
         setError('');
+        setInfoMsg('');
         setOtpCode('');
         setTempToken('');
         setLoginTempToken('');
@@ -126,7 +147,44 @@ export default function AuthPage() {
 
                 {/* Form Panel */}
                 <div className="auth-form-panel">
-                    {step === 1 ? (
+                    {isForgotPw ? (
+                        <>
+                            <div className="flex items-center gap-2" style={{ marginBottom: 'var(--space-3)' }}>
+                                <button 
+                                    onClick={resetFlow} 
+                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                >
+                                    <ArrowLeft size={18} />
+                                </button>
+                                <h2 style={{ fontSize: 'var(--text-lg)', color: 'var(--text-main)', margin: 0 }}>
+                                    Forgot Password
+                                </h2>
+                            </div>
+                            <p style={{ color: 'var(--text-tertiary)', marginBottom: 'var(--space-5)', fontSize: 'var(--text-sm)' }}>
+                                Enter your registered email address. We will send a password reset link to your email.
+                            </p>
+
+                            {error && <div style={{ color: 'var(--danger)', marginBottom: 'var(--space-4)', fontWeight: 'var(--font-medium)', fontSize: 'var(--text-sm)' }}>{error}</div>}
+                            {infoMsg && <div style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '8px', marginBottom: 'var(--space-4)', fontWeight: 'var(--font-medium)', fontSize: 'var(--text-sm)' }}>{infoMsg}</div>}
+
+                            <form onSubmit={handleForgotPwSubmit} className="flex-col gap-4">
+                                <div style={{ position: 'relative' }}>
+                                    <input 
+                                        type="email" 
+                                        placeholder="Email Address" 
+                                        required 
+                                        value={email} 
+                                        onChange={e => setEmail(e.target.value)} 
+                                        style={{ paddingLeft: '38px' }}
+                                    />
+                                    <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+                                </div>
+                                <button type="submit" className="btn-glaze" disabled={loading} style={{ marginTop: 'var(--space-2)', width: '100%' }}>
+                                    <Send size={18}/> Send Reset Link
+                                </button>
+                            </form>
+                        </>
+                    ) : step === 1 ? (
                         <>
                             <h2 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-1)', color: 'var(--text-main)' }}>
                                 {isLogin ? 'Welcome Back' : 'Join Us'}
@@ -145,6 +203,19 @@ export default function AuthPage() {
                                     value={username} 
                                     onChange={e => setUsername(e.target.value)} 
                                 />
+                                {!isLogin && (
+                                    <div style={{ position: 'relative' }}>
+                                        <input 
+                                            type="email" 
+                                            placeholder="Email Address (for account recovery)" 
+                                            required 
+                                            value={email} 
+                                            onChange={e => setEmail(e.target.value)} 
+                                            style={{ paddingLeft: '38px' }}
+                                        />
+                                        <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+                                    </div>
+                                )}
                                 <input 
                                     type="password" 
                                     placeholder="Password" 
@@ -152,6 +223,19 @@ export default function AuthPage() {
                                     value={password} 
                                     onChange={e => setPassword(e.target.value)} 
                                 />
+                                
+                                {isLogin && (
+                                    <div style={{ textAlign: 'right', marginTop: '-8px' }}>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => { setIsForgotPw(true); setError(''); setInfoMsg(''); }}
+                                            style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: 'var(--text-xs)', cursor: 'pointer' }}
+                                        >
+                                            Forgot Password?
+                                        </button>
+                                    </div>
+                                )}
+
                                 <button type="submit" className="btn-glaze" disabled={loading} style={{ marginTop: 'var(--space-2)', width: '100%' }}>
                                     {isLogin ? <><LogIn size={18}/> Login</> : <><UserPlus size={18}/> Continue to 2FA</>}
                                 </button>

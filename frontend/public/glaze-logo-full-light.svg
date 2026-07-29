@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="800" height="240">
+  <defs>
+    <linearGradient id="light-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffa5d0"/>
+      <stop offset="45%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+    
+    <linearGradient id="wordmark-light-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="50%" stop-color="#6b21a8"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+
+    <linearGradient id="sheen-light" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background (Light preview) -->
+  <rect width="800" height="240" rx="24" fill="#f8fafc"/>
+
+  <!-- Icon Mark -->
+  <g transform="translate(50, 40)">
+    <circle cx="80" cy="80" r="76" fill="#ffffff" stroke="rgba(0,0,0,0.08)" stroke-width="2" />
+    <circle cx="80" cy="80" r="56" fill="url(#light-grad)" />
+    <path d="M 12 80 A 68 68 0 0 1 148 80 A 68 50 0 0 0 12 80 Z" fill="url(#sheen-light)" opacity="0.8" />
+    <path d="M 80 38 L 90 70 L 122 80 L 90 90 L 80 122 L 70 90 L 38 80 L 70 70 Z" fill="#0f172a" opacity="0.95" />
+  </g>
+
+  <!-- Wordmark Text "glaze" -->
+  <text x="250" y="152" 
+        fill="url(#wordmark-light-grad)" 
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif" 
+        font-size="112" 
+        font-weight="700" 
+        letter-spacing="-0.04em">glaze</text>
+</svg>

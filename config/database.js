@@ -24,6 +24,38 @@ db.serialize(() => {
     db.run(`ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER DEFAULT 0`, (err) => {
         if (err && !err.message.includes('duplicate column')) console.error(err);
     });
+    db.run(`ALTER TABLE users ADD COLUMN email TEXT`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run(`ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run(`ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 1`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run(`ALTER TABLE users ADD COLUMN live_typing_enabled INTEGER DEFAULT 0`, (err) => {
+        if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL AND email != ''`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS password_resets (
+        token_hash TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL,
+        used INTEGER DEFAULT 0,
+        ip_address TEXT,
+        user_agent TEXT,
+        created_at INTEGER
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS email_verifications (
+        token_hash TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        email TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at INTEGER
+    )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS otp_attempts (
         key TEXT PRIMARY KEY,

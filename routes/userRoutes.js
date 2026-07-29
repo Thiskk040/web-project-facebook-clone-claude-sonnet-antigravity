@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 const upload = require('../config/upload');
 const { authenticateToken } = require('../middleware/auth');
@@ -43,7 +44,7 @@ router.get('/search', authenticateToken, (req, res) => {
 });
 
 router.get('/by-id/:id', authenticateToken, (req, res) => {
-    db.get("SELECT id, username, profile_picture FROM users WHERE id = ?", [req.params.id], (err, user) => {
+    db.get("SELECT id, username, profile_picture, live_typing_enabled FROM users WHERE id = ?", [req.params.id], (err, user) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!user) return res.status(404).json({ error: "User not found" });
         res.json(user);
@@ -114,6 +115,83 @@ router.get('/:username/tagged_posts', authenticateToken, (req, res) => {
     `, [req.user.id, req.params.username], (err, rows) => {
         if (err) throw err;
         res.json(rows || []);
+    });
+});
+
+router.get('/me', authenticateToken, (req, res) => {
+    db.get("SELECT id, username, email, email_verified, profile_picture, bio, cover_photo, live_typing_enabled FROM users WHERE id = ?", [req.user.id], (err, user) => {
+        if (err || !user) return res.status(404).json({ error: "User not found" });
+        res.json(user);
+    });
+});
+
+router.put('/me/live-typing', authenticateToken, (req, res) => {
+    const { enabled } = req.body;
+    const val = enabled ? 1 : 0;
+    db.run("UPDATE users SET live_typing_enabled = ? WHERE id = ?", [val, req.user.id], function(err) {
+        if (err) return res.status(500).json({ error: "Failed to update setting" });
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('user_live_typing_toggled', { userId: req.user.id, enabled: val === 1 });
+        }
+        res.json({ message: "Live typing setting updated", live_typing_enabled: val });
+    });
+});
+
+router.get('/live-typing-status/:targetUserId', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const targetUserId = parseInt(req.params.targetUserId);
+    if (!targetUserId || isNaN(targetUserId)) return res.status(400).json({ error: "Invalid target user ID" });
+
+    db.get(`
+        SELECT status FROM friendships 
+        WHERE ((requester_id = ? AND addressee_id = ?) OR (requester_id = ? AND addressee_id = ?))
+          AND status = 'accepted'
+    `, [userId, targetUserId, targetUserId, userId], (err, friendship) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!friendship) return res.status(403).json({ error: "Access denied. Friendship required." });
+
+        db.all("SELECT id, live_typing_enabled FROM users WHERE id IN (?, ?)", [userId, targetUserId], (err, users) => {
+            if (err) return res.status(500).json({ error: err.message });
+            const myOpt = users.find(u => u.id === userId)?.live_typing_enabled === 1;
+            const peerOpt = users.find(u => u.id === targetUserId)?.live_typing_enabled === 1;
+            res.json({ active: myOpt && peerOpt, myOpt, peerOpt });
+        });
+    });
+});
+
+router.put('/me/email', authenticateToken, (req, res) => {
+    const { currentPassword, newEmail } = req.body;
+    if (!newEmail || !newEmail.trim()) {
+        return res.status(400).json({ error: "New email is required" });
+    }
+    const cleanEmail = newEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    db.get("SELECT * FROM users WHERE id = ?", [req.user.id], async (err, user) => {
+        if (err || !user) return res.status(404).json({ error: "User not found" });
+
+        // If user already has a password set (all active users have password_hash), require currentPassword re-auth
+        if (!currentPassword) {
+            return res.status(400).json({ error: "Current password required to update recovery email" });
+        }
+        const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!validPassword) {
+            return res.status(400).json({ error: "Invalid current password" });
+        }
+
+        // Check if email already used by someone else
+        db.get("SELECT id FROM users WHERE LOWER(email) = ? AND id != ?", [cleanEmail, req.user.id], (err, existing) => {
+            if (err) throw err;
+            if (existing) return res.status(400).json({ error: "Email is already in use by another account" });
+
+            db.run("UPDATE users SET email = ?, email_verified = 1 WHERE id = ?", [cleanEmail, req.user.id], function(err) {
+                if (err) return res.status(500).json({ error: "Failed to update email" });
+                res.json({ message: "Email updated successfully", email: cleanEmail });
+            });
+        });
     });
 });
 

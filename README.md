@@ -82,6 +82,16 @@ The project was developed and upgraded systematically across 5 distinct phases, 
 - **Resolved Chat Initialization Crash:** Added a backend `/users/by-id/:id` endpoint. Fixed a critical bug in `MessagesPage.jsx` where clicking "Message" on a profile page of a user with no chat history fetched `/users/search?q=`, causing empty responses and failing to start the conversation. The app now resolves user profiles directly by ID.
 - **Safe Avatar Character Indexing:** Guarded all avatar initials rendering with safe fallback strings `(username || '?')[0]` to prevent React rendering crashes due to asynchronous data loading.
 
+### Phase 11: Secure Email-Based Password Reset & Session Revocation (July 24, 2026)
+- **Database Schema Migration:** Added `email`, `email_verified`, and `token_version` columns to `users` table with unique conditional indexing (`idx_users_email`). Created `password_resets` and `email_verifications` tables storing SHA-256 token hashes, IP addresses, and user agents for audit trailing.
+- **Session Revocation (Token Versioning):** Implemented `token_version` tracking in signed JWTs and enforced live verification in `middleware/auth.js` and `socket/socketHandler.js`. Password resets increment `token_version`, instantly invalidating all active JWT tokens and socket sessions across all devices for that user.
+- **2FA OTP Enforcement on Password Reset:** For 2FA-enabled accounts, `POST /auth/reset-password` requires TOTP verification (`reset-password-verify-2fa`) before updating password hashes or invalidating tokens, preventing email compromise from bypassing 2FA protection. Tokens remain usable for retry if an incorrect OTP is entered.
+- **Email Enumeration & Timing Attack Defense:** Returned uniform messages (`If that email exists, a reset link has been sent.`) and executed non-blocking asynchronous email delivery with constant-time dummy operations for non-existent emails.
+- **CSPRNG Tokens & Single-Use Enforcement:** Utilized `crypto.randomBytes(32)` (64-char hex strings) for reset tokens. Automatically invalidated older unused tokens when a new request was issued.
+- **Production Guarded Nodemailer Integration:** Integrated `utils/mailer.js` using `nodemailer`. Enforced strict startup validation throwing errors if `NODE_ENV === 'production'` without SMTP configuration, while providing Ethereal test account previews during development.
+- **Referrer Protection & Token Sanitization:** Cleaned reset tokens from address bar immediately upon page mount using `history.replaceState` in `ResetPasswordPage.jsx` and enforced `<meta name="referrer" content="no-referrer">`.
+- **Re-Authentication for Email Updates:** Secured `PUT /users/me/email` by requiring `currentPassword` re-authentication before updating account recovery emails. Added a dismissible email prompt modal (`FeedPage.jsx`) for legacy users missing recovery emails.
+
 ### Final QA & Security Audit
 Before deployment, a rigorous security and reliability audit was conducted:
 1. **IDOR Prevention:** Verified that endpoints like `DELETE /posts/:id` strictly enforce ownership.
@@ -138,6 +148,9 @@ Completed a comprehensive visual polish pass replacing all inline emojis with sc
 ### 4. "Glaze" Liquid Glass Design System Overhaul
 Successfully transitioned the interface to the **"Glaze" Liquid Glass Design System**:
 - **Rebranding to `glaze`:** Updated application branding to lowercase **glaze** with a gradient sheen wordmark in `Navbar.jsx`, `AuthPage.jsx`, and `index.html`.
+- **Particle & Interactive Canvas:** Integrated `<AntigravityCanvas />` with fluid particle animations and interactive floating elements.
+- **Gmail SMTP & Recovery Email Integration:** Configured live Gmail SMTP support in `.env` (`SMTP_HOST=smtp.gmail.com`) for direct email delivery, with fallback to Ethereal in local testing. Added user account recovery email binding and cleaned reset tokens from address bar safely.
+- **100% English UI Translation:** Translated all user interface strings across `AuthPage.jsx`, `FeedPage.jsx`, `ProfilePage.jsx`, and `ResetPasswordPage.jsx` into clean, professional English.
 - **Cloud Dancer Warm Neutral Palette:** Shifted background neutrals in `tokens.css` from cold grey to Pantone Cloud Dancer warm white (`#f7f4ef` light) and warm obsidian (`#100e0c` dark).
 - **Liquid Glaze Material System (`.liquid-glaze`):** Upgraded floating overlays (Navbar, Search/Notification dropdowns, Roast Modal) with 24px blur + 1.4 saturation, top specular border inset highlight, and sheen hover reflection animations.
 - **Signature Moments (`.btn-glaze` & `.glaze-avatar-ring`):** Applied signature pastel gradient CTA button (`.btn-glaze`) on AuthPage and double-ringed gradient outline (`.glaze-avatar-ring`) around the authenticated user's avatar.
@@ -215,7 +228,33 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Liquid Glass Frontend Wizard (`AuthPage.jsx` & `AuthContext.jsx`):** Integrated 2-step registration wizard and login 2FA verification modal matching Apple HIG / Liquid Glaze design tokens.
 - **Verification:** Created `generate_otp.js` dev helper and `test_2fa.js` automated suite. Validated 100% test pass rate across token isolation, invalid OTP rejection, registration setup, and login challenge enforcement. Validated clean frontend build (`npm run build`).
 
+### 17. Glaze Logo Vector Asset Suite & Export Hub (`export_logos.js`, `exports/`, `frontend/public/`)
+- **Multi-Format Vector Asset Generation:** Developed `export_logos.js` script to programmatically render and export the Glaze logo in multiple high-precision vector SVG formats:
+  - `glaze-icon.svg` (512×512 standalone liquid glass capsule mark)
+  - `glaze-logo-full-dark.svg` (800×240 full horizontal logo with iridescent gradient typography for dark mode)
+  - `glaze-logo-full-light.svg` (800×240 full horizontal logo optimized for light mode)
+  - `glaze-logo-stacked-dark.svg` (512×512 vertical centered splash logo)
+  - `glaze-wordmark.svg` (600×200 vector text wordmark)
+- **Interactive Asset Hub & HD PNG Exporter:** Created `exports/index.html` (and mirrored to `frontend/public/logo-exporter.html`) featuring a glassmorphism brand asset preview hub with one-click SVG downloads and an HTML5 Canvas rasterizer for exporting HD PNG images (up to 4K resolution).
+
+### 18. Real-Time Live Typing Preview & Dual Opt-In Privacy Engine (`config/database.js`, `socket/socketHandler.js`, `routes/userRoutes.js`, `MessagesPage.jsx`, `test_live_typing.js`)
+- **Database Schema Migration:** Added `live_typing_enabled INTEGER DEFAULT 0` column to `users` table via idempotent migration.
+- **In-Memory Cache & Server Opt-In Gate (`socketHandler.js`):**
+  - Implemented fast in-memory `userOptInCache` (`Map<userId, boolean>`) to avoid SQLite round-trips during keystroke events.
+  - Enforced mandatory dual opt-in verification: server drops `typing_draft` events unless **BOTH** sender and receiver have `live_typing_enabled === 1`.
+- **Throttling & Length Truncation:** Enforced a 150ms relay throttle per user/room to prevent client flooding, and capped `draftText` length to max 500 characters.
+- **Instant Invalidation & Disconnect Safety:**
+  - Toggling setting OFF mid-conversation immediately updates in-memory cache, emits `peer_typing_stopped`, and broadcasts `live_typing_status_changed` (`active: false`).
+  - Socket disconnects automatically emit `peer_typing_stopped` across active user rooms.
+- **Enumeration Protected REST API (`userRoutes.js`):** Added `PUT /users/me/live-typing` to toggle preferences and `GET /users/live-typing-status/:targetUserId` protected by friendship checks (`status = 'accepted'`) to prevent status scraping.
+- **Liquid Glass Chat UI (`MessagesPage.jsx`):**
+  - Integrated settings toggle switch and `<Sparkles /> Live Preview Active` badge.
+  - Debounced emissions at 150ms with a 3-second idle timer.
+  - Rendered peer draft bubbles separately at the bottom of the chat list with translucent dashed glass styling (`font-style: italic`, muted text color).
+- **Automated Verification Suite (`test_live_typing.js`):** Created full automated test suite verifying dual opt-in blocking, 150ms throttling, 500-char truncation, mid-draft toggle invalidation, and **Concrete Zero DB Persistence Audit** (confirming 0 occurrences of draft text in SQLite database).
+
 ---
+
 
 
 ## 🚀 How to Run the Project
