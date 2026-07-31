@@ -1,185 +1,175 @@
-const sqlite3 = require('sqlite3').verbose();
+const oracledb = require('oracledb');
+require('dotenv').config();
 
-const db = new sqlite3.Database('./facebook.db', (err) => {
-    if (err) console.error("DB Connection Error:", err.message);
-});
+// Enable Thin Mode and fetch CLOB as string
+oracledb.autoCommit = true;
+oracledb.fetchAsString = [oracledb.CLOB];
+oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
-// Enable Write-Ahead Logging for better concurrent read/write in Multicore
-db.run("PRAGMA journal_mode = WAL;");
+let pool;
+let poolPromise;
 
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        username TEXT UNIQUE NOT NULL, 
-        password_hash TEXT NOT NULL, 
-        profile_picture TEXT, 
-        bio TEXT DEFAULT '',
-        cover_photo TEXT DEFAULT '',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-    
-    db.run(`ALTER TABLE users ADD COLUMN two_factor_secret TEXT`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER DEFAULT 0`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE users ADD COLUMN email TEXT`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 1`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`ALTER TABLE users ADD COLUMN live_typing_enabled INTEGER DEFAULT 0`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL AND email != ''`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS password_resets (
-        token_hash TEXT PRIMARY KEY,
-        user_id INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL,
-        used INTEGER DEFAULT 0,
-        ip_address TEXT,
-        user_agent TEXT,
-        created_at INTEGER
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS email_verifications (
-        token_hash TEXT PRIMARY KEY,
-        user_id INTEGER NOT NULL,
-        email TEXT NOT NULL,
-        expires_at INTEGER NOT NULL,
-        used INTEGER DEFAULT 0,
-        created_at INTEGER
-    )`);
-    db.run(`ALTER TABLE email_verifications ADD COLUMN email TEXT`, (err) => {
-        if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-
-    db.run(`CREATE TABLE IF NOT EXISTS otp_attempts (
-        key TEXT PRIMARY KEY,
-        attempts INTEGER DEFAULT 1,
-        first_attempt INTEGER
-    )`);
-    
-    db.run(`CREATE TABLE IF NOT EXISTS posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        user_id INTEGER NOT NULL, 
-        content TEXT, 
-        image_url TEXT, 
-        bait_score INTEGER DEFAULT 0,
-        bait_translation TEXT DEFAULT '',
-        bait_roasts TEXT DEFAULT '',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS interactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        post_id INTEGER NOT NULL, 
-        user_id INTEGER NOT NULL,
-        type TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(post_id) REFERENCES posts(id),
-        FOREIGN KEY(user_id) REFERENCES users(id),
-        UNIQUE(post_id, user_id, type)
-    )`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_interactions_post_id ON interactions(post_id)`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS comments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        post_id INTEGER NOT NULL, 
-        user_id INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(post_id) REFERENCES posts(id),
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS friendships (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        requester_id INTEGER NOT NULL, 
-        addressee_id INTEGER NOT NULL, 
-        status TEXT DEFAULT 'pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(requester_id) REFERENCES users(id),
-        FOREIGN KEY(addressee_id) REFERENCES users(id),
-        UNIQUE(requester_id, addressee_id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS notifications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        user_id INTEGER NOT NULL, 
-        actor_id INTEGER NOT NULL, 
-        type TEXT NOT NULL, 
-        target_id INTEGER, 
-        is_read BOOLEAN DEFAULT 0, 
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id),
-        FOREIGN KEY(actor_id) REFERENCES users(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS tags (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        post_id INTEGER NOT NULL, 
-        tagged_user_id INTEGER NOT NULL, 
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(post_id) REFERENCES posts(id),
-        FOREIGN KEY(tagged_user_id) REFERENCES users(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER NOT NULL,
-        receiver_id INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        is_read BOOLEAN DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(sender_id) REFERENCES users(id),
-        FOREIGN KEY(receiver_id) REFERENCES users(id)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS bait_patterns (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        regex_pattern TEXT NOT NULL,
-        flags TEXT DEFAULT '',
-        label TEXT NOT NULL,
-        roast TEXT NOT NULL
-    )`, (err) => {
-        if (err) return console.error(err);
-        
-        db.get("SELECT COUNT(*) as count FROM bait_patterns", (err, row) => {
-            if (err) return console.error(err);
-            if (row.count === 0) {
-                console.log("[Database] Seeding 5,000 bait patterns into SQLite...");
-                const { generate5000Patterns } = require('./baitPatternsGenerator');
-                const initialPatterns = generate5000Patterns();
-
-                db.serialize(() => {
-                    db.run("BEGIN TRANSACTION");
-                    const stmt = db.prepare("INSERT INTO bait_patterns (regex_pattern, flags, label, roast) VALUES (?, ?, ?, ?)");
-                    initialPatterns.forEach(p => {
-                        stmt.run([p.regex_pattern, p.flags || '', p.label, p.roast]);
-                    });
-                    stmt.finalize();
-                    db.run("COMMIT", (err) => {
-                        if (err) {
-                            console.error("[Database] Failed to commit seeding transaction:", err);
-                        } else {
-                            console.log("[Database] Successfully seeded 5,000 patterns.");
-                        }
-                    });
-                });
-            }
+async function getPool() {
+    if (pool) return pool;
+    if (!poolPromise) {
+        poolPromise = oracledb.createPool({
+            user: process.env.ORACLE_USER || 'Glaze',
+            password: process.env.ORACLE_PASSWORD || 'Gl@ze123',
+            connectString: process.env.ORACLE_CONNECT_STRING || 'localhost:1521/XEPDB1',
+            poolMin: parseInt(process.env.ORACLE_POOL_MIN || '2', 10),
+            poolMax: parseInt(process.env.ORACLE_POOL_MAX || '10', 10),
+            poolIncrement: 1
+        }).then(p => {
+            pool = p;
+            return pool;
+        }).catch(err => {
+            poolPromise = null;
+            throw err;
         });
-    });
-});
+    }
+    return poolPromise;
+}
+
+getPool().catch(err => console.error("[Oracle DB Pool Error]", err.message));
+
+function processSql(sql) {
+    let cleaned = sql.trim().replace(/;+$/, '');
+    let paramIndex = 1;
+    let processed = cleaned.replace(/\?/g, () => `:${paramIndex++}`);
+    
+    // Convert LIMIT / OFFSET to Oracle 12c+ syntax
+    processed = processed.replace(/\bLIMIT\s+(\d+)\s+OFFSET\s+(\d+)\b/gi, 'OFFSET $2 ROWS FETCH NEXT $1 ROWS ONLY');
+    processed = processed.replace(/\bLIMIT\s+(\d+)\b/gi, 'FETCH NEXT $1 ROWS ONLY');
+
+    return processed;
+}
+
+function normalizeKeys(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(normalizeKeys);
+    if (obj instanceof Date) return obj.toISOString();
+
+    const normalized = {};
+    for (const [key, value] of Object.entries(obj)) {
+        const lowerKey = key.toLowerCase();
+        if (value instanceof Date) {
+            normalized[lowerKey] = value.toISOString();
+        } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            normalized[lowerKey] = normalizeKeys(value);
+        } else {
+            normalized[lowerKey] = value;
+        }
+    }
+    return normalized;
+}
+
+const db = {
+    get(sql, params = [], callback) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        return (async () => {
+            const p = await getPool();
+            const connection = await p.getConnection();
+            try {
+                const finalSql = processSql(sql);
+                const res = await connection.execute(finalSql, params || []);
+                const row = res.rows && res.rows.length > 0 ? normalizeKeys(res.rows[0]) : undefined;
+                if (callback) callback(null, row);
+                return row;
+            } finally {
+                await connection.close();
+            }
+        })().catch(err => {
+            if (callback) callback(err);
+            else console.error("[DB Get Error]", err);
+            throw err;
+        });
+    },
+
+    all(sql, params = [], callback) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        return (async () => {
+            const p = await getPool();
+            const connection = await p.getConnection();
+            try {
+                const finalSql = processSql(sql);
+                const res = await connection.execute(finalSql, params || []);
+                const rows = (res.rows || []).map(normalizeKeys);
+                if (callback) callback(null, rows);
+                return rows;
+            } finally {
+                await connection.close();
+            }
+        })().catch(err => {
+            if (callback) callback(err);
+            else console.error("[DB All Error]", err);
+            throw err;
+        });
+    },
+
+    run(sql, params = [], callback) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        return (async () => {
+            const isInsert = /^\s*INSERT\s+INTO/i.test(sql);
+            const hasReturning = /RETURNING\b/i.test(sql);
+            const p = await getPool();
+            const connection = await p.getConnection();
+            try {
+                let finalSql = processSql(sql);
+                let bindParams = Array.isArray(params) ? [...params] : { ...(params || {}) };
+                let outIdBindNeeded = isInsert && !hasReturning && /\b(users|posts|interactions|comments|friendships|notifications|tags|messages|bait_patterns)\b/i.test(sql);
+
+                if (outIdBindNeeded) {
+                    finalSql += ' RETURNING id INTO :out_id_res';
+                    if (Array.isArray(bindParams)) {
+                        bindParams.push({ dir: oracledb.BIND_OUT, type: oracledb.NUMBER });
+                    } else {
+                        bindParams.out_id_res = { dir: oracledb.BIND_OUT, type: oracledb.NUMBER };
+                    }
+                }
+
+                const res = await connection.execute(finalSql, bindParams);
+                const context = {
+                    changes: res.rowsAffected || 0,
+                    lastID: undefined
+                };
+
+                if (outIdBindNeeded && res.outBinds) {
+                    let outVal = res.outBinds.out_id_res || (Array.isArray(res.outBinds) ? res.outBinds[res.outBinds.length - 1] : undefined);
+                    if (Array.isArray(outVal)) outVal = outVal[0];
+                    context.lastID = outVal;
+                }
+
+                if (callback) callback.call(context, null);
+                return context;
+            } finally {
+                await connection.close();
+            }
+        })().catch(err => {
+            if (callback) callback.call({ changes: 0 }, err);
+            else console.error("[DB Run Error]", err);
+            throw err;
+        });
+    },
+
+    prepare(sql) {
+        return {
+            run: (params, callback) => db.run(sql, params, callback),
+            finalize: () => {}
+        };
+    },
+
+    serialize(cb) {
+        if (cb) cb();
+    }
+};
 
 module.exports = db;

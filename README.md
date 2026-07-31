@@ -5,7 +5,7 @@ CRITICAL: Any AI Agent accessing this repository MUST read this README.md file i
 
 # Complete Facebook Clone
 
-**Last Updated (Timestamp):** 2026-07-17T15:15:00+07:00
+**Last Updated (Timestamp):** 2026-07-31T17:05:00+07:00
 
 ## 📖 Project Overview
 This project is a modern, real-time Web Application modeled after Facebook. It was completely overhauled from a legacy static structure into a highly secure, real-time ecosystem utilizing a decoupled architecture (Node.js/Express backend and React/Vite frontend). 
@@ -292,6 +292,46 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
   - `routes/passwordResetRoutes.js` (Forgot password & password reset step 1)
   - `routes/emailVerifyRoutes.js` (Email verification token confirmation)
 - **Zero API Contract Mutation:** Maintained 100% endpoint URL and payload compatibility across all 4 mounted route files (`/auth/*`). Verified 100% pass rate across `test_2fa.js`, `test_forgot_password.js`, `test_email_verify_fix.js`, and `test_hardening.js`.
+
+### 24. Project Governance, Root Cleanup & Security Vulnerability Remediation
+- **Agent Governance Rules ([.agents/AGENTS.md](file:///.agents/AGENTS.md)):** Established strict repo-wide rules covering test script relocation (`scratch/`), git-ignoring execution logs (`.txt`, `.log`, `.zip`), handler file size caps (~200 lines), and mandatory `README.md` changelog maintenance.
+- **Root Directory Cleanup:** Relocated all 19 legacy test/debug scripts from root to `scratch/` using `git mv`. Deleted legacy output files (`security_test_output.txt`, `deep_audit_output.txt`, `deep_audit_cluster_output.txt`, `frontend_backup.zip`) and updated `.gitignore`.
+- **Vulnerability Remediation (`npm audit`):**
+  - **Backend:** Resolved `tar` DoS vulnerability via `npm audit fix` (0 vulnerabilities remaining).
+  - **Frontend:** Patched `postcss` path traversal and upgraded `react-router-dom` to `^7.18.2` resolving high-severity vulnerabilities. Verified zero build breakages (`npm run build`).
+- **Privacy Metadata Guard (`routes/userRoutes.js`):** Patched `PUT /users/me/live-typing` to emit socket events `user_live_typing_toggled` strictly to active accepted friends' user rooms (`io.to('user_' + friendId)`) rather than broadcasting system-wide metadata to strangers.
+
+### 25. Email Verification Frontend Route Integration & Account Verification
+- **Frontend Email Verification UI (`VerifyEmailPage.jsx`, `App.jsx`):** Built and integrated `<VerifyEmailPage />` handling `/verify-email` and `/auth/verify-email` routes. Automatically extracts verification tokens, calls backend `GET /auth/verify-email`, strips tokens from URL to prevent referrer leakage, and displays confirmation/error states.
+### 26. Database Migration Execution & Verification (SQLite -> Oracle Database XE)
+- **Oracle XE Infrastructure & Schema Creation:** Provisioned Database User `Glaze` in Oracle 21c XE (`XEPDB1`) and created all 12 relational tables (`users`, `posts`, `interactions`, `comments`, `friendships`, `notifications`, `tags`, `messages`, `password_resets`, `email_verifications`, `otp_attempts`, `bait_patterns`) with `IDENTITY` primary keys and Oracle constraints.
+- **Data ETL Migration Pipeline:** Executed [`scratch/migrate_to_oracle.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/migrate_to_oracle.js) to extract and transform 100% of SQLite data (114 users, 112 posts, 5,948 notifications, 5,000 bait patterns, etc.) into Oracle XE, followed by identity sequence reseeding to `MAX(id) + 1`.
+- **Database Access Layer Refactoring:** Updated [`config/database.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/config/database.js) to utilize `node-oracledb` Thin Mode connection pooling, providing seamless backward-compatible async wrappers (`get`, `all`, `run`, `prepare`) with automatic SQL parameter conversion (`?` -> `:1`), Oracle `LIMIT/OFFSET` translation, and lower-case object key normalization.
+- **Runtime Verification & Asset Serving Fix:** Ran backend server and executed end-to-end API tests ([`scratch/test_oracle_api.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/test_oracle_api.js)) verifying successful authentication, post querying, and post creation against Oracle XE. Configured `Cross-Origin-Resource-Policy: cross-origin` header for `/uploads` route in [`server.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/server.js) allowing cross-origin image rendering on the frontend. Cleaned up obsolete SQLite database files (`facebook.db`) and temporary migration SQL scripts.
+
+### 27. Oracle Database Listener Diagnosis & Connection Resolution
+- **Troubleshooting Root Cause:** Identified that the database connection error (`NJS-503: connect ECONNREFUSED` / `NJS-518: Service XEPDB1 is not registered with listener`) was caused by the Oracle TNS Listener service (`OracleOraDB21Home1TNSListener`) being in a `Stopped` status, along with `HOST = host.docker.internal` restriction in `listener.ora` preventing connections to `localhost:1521`.
+- **Service Recovery & Listener Configuration:**
+  - Started the Windows service `OracleOraDB21Home1TNSListener`.
+  - Reconfigured `listener.ora` (`HOST = 0.0.0.0`) and `tnsnames.ora` (`HOST = localhost`).
+  - Set `LOCAL_LISTENER='LISTENER_XE'` and executed `ALTER SYSTEM REGISTER` in Oracle DB.
+- **Verification:** Verified database connection via [`scratch/test_db.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/test_db.js). Connections to `localhost:1521/XEPDB1`, `192.168.1.126:1521/XEPDB1`, and `host.docker.internal:1521/XEPDB1` all succeeded cleanly.
+
+### 28. Command-Line Oracle DB Search & Grep Utility
+- **CLI Utility Implementation ([`scratch/grep_db.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/grep_db.js)):** Created a command-line tool allowing developers to query, inspect, and search database content directly from terminal without relying on external GUI apps like DBeaver.
+- **Features:**
+  - `node scratch/grep_db.js`: Summary of all tables and total row counts.
+  - `node scratch/grep_db.js <tableName> [limit]`: View recent rows formatted in neat terminal tables.
+  - `node scratch/grep_db.js --search <keyword>`: Global grep searching across text/number columns in all tables.
+  - `node scratch/grep_db.js --table <tableName> --grep <keyword>`: Targeted search within a specific table.
+  - `node scratch/grep_db.js --schema <tableName>`: Display table schema and data types.
+- **DB Layer Promise Support Fix:** Refactored [`config/database.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/config/database.js) to return Promises directly from `db.get`, `db.all`, and `db.run` for native `async/await` usage alongside legacy callbacks.
+
+### 29. Git Repository Clean-up & Security Untracking Audit (July 31, 2026)
+- **Git Index Clean-up (`scratch/` & Output Files):** Cleaned git cache using `git rm -r --cached scratch/` to remove tracked test scripts from git history while preserving local files in `scratch/`. Staged deletions of all legacy output files (`.txt`, `.zip`).
+- **Strict `.gitignore` Compliance Audit:** Verified excluding `.env`, `uploads/`, `facebook.db*`, `scratch/`, `tests/`, `node_modules/`, and build artifacts from Git tracking, enforcing project governance rules.
+- **Frontend Verification Page Integration:** Verified untracked frontend component `VerifyEmailPage.jsx` and added to git tracking.
+
 
 ---
 

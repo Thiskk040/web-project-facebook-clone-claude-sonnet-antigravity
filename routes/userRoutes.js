@@ -139,7 +139,17 @@ router.put('/me/live-typing', authenticateToken, (req, res) => {
         if (err) return res.status(500).json({ error: "Failed to update setting" });
         const io = req.app.get('io');
         if (io) {
-            io.emit('user_live_typing_toggled', { userId: req.user.id, enabled: val === 1 });
+            db.all(`
+                SELECT CASE WHEN requester_id = ? THEN addressee_id ELSE requester_id END as friend_id
+                FROM friendships
+                WHERE (requester_id = ? OR addressee_id = ?) AND status = 'accepted'
+            `, [req.user.id, req.user.id, req.user.id], (err, friends) => {
+                if (!err && friends) {
+                    friends.forEach(f => {
+                        io.to(`user_${f.friend_id}`).emit('user_live_typing_toggled', { userId: req.user.id, enabled: val === 1 });
+                    });
+                }
+            });
         }
         res.json({ message: "Live typing setting updated", live_typing_enabled: val });
     });

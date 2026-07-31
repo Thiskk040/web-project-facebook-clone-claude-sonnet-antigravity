@@ -4,3 +4,9 @@ facebook.db*
 uploads/
 frontend/node_modules/
 frontend/dist/
+*.txt
+*.log
+*.zip
+scratch/
+tests/
+

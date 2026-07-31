@@ -21,12 +21,12 @@ function loadPatternsFromDb() {
                 loadRetries++;
                 setTimeout(loadPatternsFromDb, 200);
             } else {
-                console.error("Failed to load bait patterns from SQLite after retries:", err);
+                console.error("Failed to load bait patterns from Oracle Database XE after retries:", err);
             }
             return;
         }
 
-        console.log(`[BaitDetector] Successfully loaded ${rows ? rows.length : 0} patterns from SQLite.`);
+        console.log(`[BaitDetector] Successfully loaded ${rows ? rows.length : 0} patterns from Oracle Database XE.`);
         cachedPatterns = (rows || []).map(row => {
             try {
                 return {
