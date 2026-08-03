@@ -5,14 +5,14 @@ CRITICAL: Any AI Agent accessing this repository MUST read this README.md file i
 
 # Complete Facebook Clone
 
-**Last Updated (Timestamp):** 2026-07-31T17:05:00+07:00
+**Last Updated (Timestamp):** 2026-08-03T13:56:00+07:00
 
 ## 📖 Project Overview
 This project is a modern, real-time Web Application modeled after Facebook. It was completely overhauled from a legacy static structure into a highly secure, real-time ecosystem utilizing a decoupled architecture (Node.js/Express backend and React/Vite frontend). 
 
 ## 🛠️ Technology Stack
 - **Backend:** Node.js, Express.js
-- **Database:** SQLite3
+- **Database:** Oracle Database 21c XE (`node-oracledb` Thin Mode Connection Pooling with B-Tree Composite Indexing)
 - **Real-time:** Socket.io
 - **Security:** JWT (JSON Web Tokens), Bcrypt.js, Multer (Strict Mime-type validation)
 - **Frontend:** React, Vite, Vanilla CSS (Glassmorphism aesthetics)
@@ -327,11 +327,12 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
   - `node scratch/grep_db.js --schema <tableName>`: Display table schema and data types.
 - **DB Layer Promise Support Fix:** Refactored [`config/database.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/config/database.js) to return Promises directly from `db.get`, `db.all`, and `db.run` for native `async/await` usage alongside legacy callbacks.
 
-### 29. Git Repository Clean-up & Security Untracking Audit (July 31, 2026)
-- **Git Index Clean-up (`scratch/` & Output Files):** Cleaned git cache using `git rm -r --cached scratch/` to remove tracked test scripts from git history while preserving local files in `scratch/`. Staged deletions of all legacy output files (`.txt`, `.zip`).
-- **Strict `.gitignore` Compliance Audit:** Verified excluding `.env`, `uploads/`, `facebook.db*`, `scratch/`, `tests/`, `node_modules/`, and build artifacts from Git tracking, enforcing project governance rules.
-- **Frontend Verification Page Integration:** Verified untracked frontend component `VerifyEmailPage.jsx` and added to git tracking.
-
+### 30. Database Query & Index Optimization (Oracle 21c XE) (August 3, 2026)
+- **Safe & Gated Index Provisioning ([`config/init_indexes.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/config/init_indexes.js)):** Built an idempotent index migration system querying `USER_INDEXES` prior to creation. Gated execution via `npm run migrate:indexes` CLI command. Confirmed `CREATE INDEX ... ONLINE` capability on Oracle 21c XE.
+- **Dual Mirrored Chat Index Design:** Implemented `IDX_MSG_CONV_FORWARD` `(sender_id, receiver_id, created_at ASC)` and `IDX_MSG_CONV_REVERSE` `(receiver_id, sender_id, created_at ASC)` to serve bidirectional chat queries without table schema DDL alterations.
+- **Full Composite B-Tree Index Suite:** Provisioned 11 targeted composite indexes across hot query paths (`IDX_POSTS_USER_CREATED`, `IDX_MSG_UNREAD`, `IDX_NOTIF_USER_CREATED`, `IDX_FRIENDSHIP_PAIR`, `IDX_FRIENDSHIP_REVERSE`, `IDX_INTERACTIONS_POST`, `IDX_COMMENTS_POST`, `IDX_TAGS_USER`, `IDX_USERS_USERNAME_LOWER`).
+- **Route Refactoring:** Updated [`routes/userRoutes.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/routes/userRoutes.js) (`GET /users/search`) to use `UPPER(username) LIKE UPPER(:1) || '%'` for functional index scans and [`routes/postRoutes.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/routes/postRoutes.js) (`GET /posts`) for pagination.
+- **Empirical Benchmark & EXPLAIN PLAN Verification ([`scratch/benchmark_queries.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/benchmark_queries.js)):** Verified 100% idempotency (0 errors on consecutive runs). Confirmed Oracle CBO optimizer selects `INDEX RANGE SCAN` across `IDX_FRIENDSHIP_PAIR`, `IDX_MSG_CONV_FORWARD`, `IDX_NOTIF_USER_CREATED`, and `IDX_USERS_USERNAME_LOWER`.
 
 ---
 

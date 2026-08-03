@@ -7,6 +7,10 @@ const { detectBait } = require('../utils/baitDetector');
 const router = express.Router();
 
 router.get('/', authenticateToken, (req, res) => {
+    const limit = parseInt(req.query.limit || '20', 10);
+    const page = parseInt(req.query.page || '1', 10);
+    const offset = (page - 1) * limit;
+
     db.all(`
         SELECT p.*, u.username, u.profile_picture,
                (SELECT COUNT(*) FROM interactions WHERE post_id = p.id AND type='like') as like_count,
@@ -20,7 +24,8 @@ router.get('/', authenticateToken, (req, res) => {
             SELECT requester_id FROM friendships WHERE addressee_id = ? AND status='accepted'
         )
         ORDER BY p.created_at DESC
-    `, [req.user.id, req.user.id, req.user.id, req.user.id], (err, rows) => {
+        LIMIT ? OFFSET ?
+    `, [req.user.id, req.user.id, req.user.id, req.user.id, limit, offset], (err, rows) => {
         if (err) throw err;
         res.json(rows || []);
     });

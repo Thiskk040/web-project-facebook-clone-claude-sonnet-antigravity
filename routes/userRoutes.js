@@ -37,9 +37,9 @@ router.get('/search', authenticateToken, (req, res) => {
                 (requester_id = ? AND addressee_id = u.id)
             ) as friend_status
         FROM users u
-        WHERE u.username LIKE ? AND u.id != ?
+        WHERE UPPER(u.username) LIKE UPPER(?) || '%' AND u.id != ?
         LIMIT 15
-    `, [userId, userId, `%${query}%`, userId], (err, rows) => {
+    `, [userId, userId, query, userId], (err, rows) => {
         if (err) throw err;
         res.json(rows);
     });
