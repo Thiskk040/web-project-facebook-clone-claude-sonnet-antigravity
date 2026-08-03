@@ -7,6 +7,10 @@ frontend/dist/
 *.txt
 *.log
 *.zip
-scratch/
+scratch/*.log
+scratch/*_output.txt
+scratch/*.tmp
+scratch/*.txt
+scratch/*.zip
 tests/
 

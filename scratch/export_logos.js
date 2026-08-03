@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const exportsDir = path.join(__dirname, 'exports');
-const publicDir = path.join(__dirname, 'frontend', 'public');
+const exportsDir = path.join(__dirname, '..', 'exports');
+const publicDir = path.join(__dirname, '..', 'frontend', 'public');
 
 if (!fs.existsSync(exportsDir)) {
     fs.mkdirSync(exportsDir, { recursive: true });

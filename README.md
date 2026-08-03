@@ -334,6 +334,10 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Route Refactoring:** Updated [`routes/userRoutes.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/routes/userRoutes.js) (`GET /users/search`) to use `UPPER(username) LIKE UPPER(:1) || '%'` for functional index scans and [`routes/postRoutes.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/routes/postRoutes.js) (`GET /posts`) for pagination.
 - **Empirical Benchmark & EXPLAIN PLAN Verification ([`scratch/benchmark_queries.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/benchmark_queries.js)):** Verified 100% idempotency (0 errors on consecutive runs). Confirmed Oracle CBO optimizer selects `INDEX RANGE SCAN` across `IDX_FRIENDSHIP_PAIR`, `IDX_MSG_CONV_FORWARD`, `IDX_NOTIF_USER_CREATED`, and `IDX_USERS_USERNAME_LOWER`.
 
+### 31. Repository Hygiene Completion & Test Script Tracking (August 3, 2026)
+- **Root Directory Cleanup:** Relocated `export_logos.js` from root into [`scratch/export_logos.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/export_logos.js) and updated relative paths (`../exports`, `../frontend/public`), leaving `server.js` as the single `.js` file at repository root.
+- **Git Ignore Granular Rules (Option A):** Updated [`.gitignore`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/.gitignore) to selectively ignore output artifacts (`scratch/*.log`, `scratch/*_output.txt`, `scratch/*.tmp`, `scratch/*.txt`, `scratch/*.zip`) while tracking all essential verification scripts (`test_2fa.js`, `test_hardening.js`, `test_email_verify_fix.js`, `test_forgot_password.js`, `grep_db.js`, `benchmark_queries.js`, `test_performance.js`, etc.) for future automated re-runs.
+
 ---
 
 
