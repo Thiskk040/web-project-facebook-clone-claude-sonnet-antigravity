@@ -71,8 +71,8 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
     if (!token || !newPassword) {
         return res.status(400).json({ error: "Reset token and new password required" });
     }
-    if (newPassword.length < 4) {
-        return res.status(400).json({ error: "Password must be at least 4 characters" });
+    if (newPassword.length < 8) {
+        return res.status(400).json({ error: "Password must be at least 8 characters" });
     }
 
     const key = `reset_pw_${req.ip || 'client'}`;

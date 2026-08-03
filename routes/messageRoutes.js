@@ -53,20 +53,49 @@ router.get('/:userId', authenticateToken, (req, res) => {
     });
 });
 
+const { checkRateLimit } = require('../utils/authHelpers');
+
 router.post('/', authenticateToken, (req, res) => {
     const { receiver_id, content } = req.body;
     const io = req.app.get('io');
     if (!receiver_id || !content) return res.status(400).json({ error: "Missing fields" });
-    
-    db.run("INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)", [req.user.id, receiver_id, content], function(err) {
-        if (err) throw err;
-        const msg = { id: this.lastID, sender_id: req.user.id, receiver_id: parseInt(receiver_id), content, is_read: 0, created_at: new Date().toISOString() };
-        io.to(`user_${receiver_id}`).emit(`new_message_${receiver_id}`, msg);
-        if (parseInt(receiver_id) !== parseInt(req.user.id)) {
-            io.to(`user_${req.user.id}`).emit(`new_message_${req.user.id}`, msg);
+
+    // Allow self-messages or require accepted friendship
+    if (parseInt(receiver_id) === parseInt(req.user.id)) {
+        return processSendMessage();
+    }
+
+    db.get(`
+        SELECT status FROM friendships 
+        WHERE status = 'accepted' AND (
+            (requester_id = ? AND addressee_id = ?) OR 
+            (requester_id = ? AND addressee_id = ?)
+        )
+    `, [req.user.id, receiver_id, receiver_id, req.user.id], async (err, friendship) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        if (!friendship) {
+            return res.status(403).json({ error: "You can only message users who are your accepted friends." });
         }
-        res.status(201).json(msg);
+
+        const rateCheck = await checkRateLimit(`msg_${req.user.id}`, 20, 1 * 60 * 1000);
+        if (rateCheck.blocked) {
+            return res.status(429).json({ error: "Messaging rate limit exceeded. Please slow down." });
+        }
+
+        processSendMessage();
     });
+
+    function processSendMessage() {
+        db.run("INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)", [req.user.id, receiver_id, content], function(err) {
+            if (err) throw err;
+            const msg = { id: this.lastID, sender_id: req.user.id, receiver_id: parseInt(receiver_id), content, is_read: 0, created_at: new Date().toISOString() };
+            io.to(`user_${receiver_id}`).emit(`new_message_${receiver_id}`, msg);
+            if (parseInt(receiver_id) !== parseInt(req.user.id)) {
+                io.to(`user_${req.user.id}`).emit(`new_message_${req.user.id}`, msg);
+            }
+            res.status(201).json(msg);
+        });
+    }
 });
 
 module.exports = router;

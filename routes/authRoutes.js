@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const db = require('../config/database');
-const { asyncHandler, issueAuthToken } = require('../utils/authHelpers');
+const { asyncHandler, checkRateLimit, issueAuthToken } = require('../utils/authHelpers');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.post('/register-init', asyncHandler(async (req, res) => {
     const { username, password, email } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
     if (username.length < 3) return res.status(400).json({ error: "Username must be at least 3 characters" });
-    if (password.length < 4) return res.status(400).json({ error: "Password must be at least 4 characters" });
+    if (password.length < 8) return res.status(400).json({ error: "Password must be at least 8 characters" });
 
     let formattedEmail = email ? email.trim().toLowerCase() : null;
     if (formattedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formattedEmail)) {
@@ -50,10 +51,18 @@ router.post('/register-init', asyncHandler(async (req, res) => {
     });
 }));
 
-// 2. Overhauled Login (Checks 2FA requirement)
+// 2. Overhauled Login (Checks Rate Limit & 2FA requirement)
 router.post('/login', asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
+
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const rateLimitKey = `login_${clientIp}_${username.trim().toLowerCase()}`;
+    const rateCheck = await checkRateLimit(rateLimitKey, 5, 10 * 60 * 1000);
+
+    if (rateCheck.blocked) {
+        return res.status(429).json({ error: "Too many login attempts. Please try again in 10 minutes." });
+    }
 
     db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
         if (err) throw err;
@@ -79,6 +88,23 @@ router.post('/login', asyncHandler(async (req, res) => {
             token,
             user: userPayload
         });
+    });
+}));
+
+// 3. Server-Side Logout & Token Revocation
+router.post('/logout', authenticateToken, asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const io = req.app.get('io');
+
+    db.run("UPDATE users SET token_version = COALESCE(token_version, 1) + 1 WHERE id = ?", [userId], (err) => {
+        if (err) return res.status(500).json({ error: "Logout database error" });
+
+        if (io) {
+            io.to(`user_${userId}`).emit('force_logout', { message: "Logged out and tokens revoked." });
+            io.in(`user_${userId}`).disconnectSockets(true);
+        }
+
+        res.json({ message: "Logged out successfully" });
     });
 }));
 

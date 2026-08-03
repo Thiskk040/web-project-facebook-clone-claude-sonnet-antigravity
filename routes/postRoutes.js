@@ -3,6 +3,7 @@ const db = require('../config/database');
 const upload = require('../config/upload');
 const { authenticateToken } = require('../middleware/auth');
 const { detectBait } = require('../utils/baitDetector');
+const { checkRateLimit } = require('../utils/authHelpers');
 
 const router = express.Router();
 
@@ -38,6 +39,11 @@ router.post('/', authenticateToken, upload.single('image'), upload.validateImage
     const io = req.app.get('io');
 
     if (!content && !imageUrl) return res.status(400).json({ error: "Content or image is required" });
+
+    const rateCheck = await checkRateLimit(`post_${userId}`, 10, 10 * 60 * 1000);
+    if (rateCheck.blocked) {
+        return res.status(429).json({ error: "Post creation rate limit exceeded. Please wait a few minutes before posting again." });
+    }
 
     try {
         const bait = await detectBait(content);

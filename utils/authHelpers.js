@@ -4,42 +4,43 @@ const db = require('../config/database');
 const asyncHandler = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 // Helper for Atomic Rate Limiting with sliding window reset across cluster workers
-const checkOtpRateLimit = (key) => {
+const checkRateLimit = (key, maxAttempts = 5, windowMs = 10 * 60 * 1000) => {
     return new Promise((resolve, reject) => {
         const now = Date.now();
-        const windowMs = 10 * 60 * 1000; // 10 minutes
-        const maxAttempts = 5;
 
         // Clean up expired records > 24 hours
         db.run(`DELETE FROM otp_attempts WHERE (? - first_attempt) > 86400000`, [now]);
 
-        // Atomic Upsert with Sliding Window Reset
-        const upsertSql = `
-            INSERT INTO otp_attempts (key, attempts, first_attempt) VALUES (?, 1, ?)
-            ON CONFLICT(key) DO UPDATE SET
-                attempts = CASE
-                    WHEN (? - first_attempt) > ? THEN 1
-                    ELSE attempts + 1
-                END,
-                first_attempt = CASE
-                    WHEN (? - first_attempt) > ? THEN ?
-                    ELSE first_attempt
-                END
-        `;
-
-        db.run(upsertSql, [key, now, now, windowMs, now, windowMs, now], function(err) {
+        db.get(`SELECT key, attempts, first_attempt FROM otp_attempts WHERE key = ?`, [key], (err, row) => {
             if (err) return reject(err);
 
-            db.get(`SELECT attempts, first_attempt FROM otp_attempts WHERE key = ?`, [key], (err, row) => {
-                if (err) return reject(err);
-                if (row && row.attempts > maxAttempts && (now - row.first_attempt) <= windowMs) {
-                    return resolve({ blocked: true });
-                }
-                return resolve({ blocked: false });
-            });
+            if (!row) {
+                db.run(`INSERT INTO otp_attempts (key, attempts, first_attempt) VALUES (?, 1, ?)`, [key, now], (err) => {
+                    if (err) return reject(err);
+                    return resolve({ blocked: false });
+                });
+            } else {
+                const expired = (now - row.first_attempt) > windowMs;
+                const newAttempts = expired ? 1 : row.attempts + 1;
+                const newFirstAttempt = expired ? now : row.first_attempt;
+
+                db.run(
+                    `UPDATE otp_attempts SET attempts = ?, first_attempt = ? WHERE key = ?`,
+                    [newAttempts, newFirstAttempt, key],
+                    (err) => {
+                        if (err) return reject(err);
+                        if (newAttempts > maxAttempts && !expired) {
+                            return resolve({ blocked: true });
+                        }
+                        return resolve({ blocked: false });
+                    }
+                );
+            }
         });
     });
 };
+
+const checkOtpRateLimit = (key) => checkRateLimit(key, 5, 10 * 60 * 1000);
 
 function issueAuthToken(user) {
     const tokenVersion = user.token_version || 1;
@@ -55,6 +56,7 @@ function issueAuthToken(user) {
 
 module.exports = {
     asyncHandler,
+    checkRateLimit,
     checkOtpRateLimit,
     issueAuthToken
 };

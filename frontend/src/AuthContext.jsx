@@ -69,7 +69,16 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(newUser));
     };
 
-    const logout = () => {
+    const logout = async () => {
+        if (token) {
+            try {
+                await axios.post('http://localhost:3000/auth/logout', {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch (err) {
+                // Non-blocking fallback if token already expired
+            }
+        }
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');

@@ -62,6 +62,53 @@ function validateMagicBytes(filePath) {
     }
 }
 
+function sanitizeExifMetadata(filePath) {
+    try {
+        if (!fs.existsSync(filePath)) return;
+        const fileBuf = fs.readFileSync(filePath);
+        if (fileBuf.length < 4) return;
+
+        // Check JPEG SOI (FF D8 FF)
+        if (fileBuf[0] === 0xFF && fileBuf[1] === 0xD8 && fileBuf[2] === 0xFF) {
+            let offset = 2;
+            let modified = false;
+            const cleanedSegments = [fileBuf.subarray(0, 2)];
+
+            while (offset < fileBuf.length) {
+                if (fileBuf[offset] !== 0xFF) break;
+                const marker = fileBuf[offset + 1];
+
+                // SOS (Start of Scan - FF DA) or EOI (End of Image - FF D9)
+                if (marker === 0xDA || marker === 0xD9) {
+                    cleanedSegments.push(fileBuf.subarray(offset));
+                    break;
+                }
+
+                if (offset + 3 >= fileBuf.length) break;
+                const segLen = fileBuf.readUInt16BE(offset + 2);
+                const nextOffset = offset + 2 + segLen;
+                if (nextOffset > fileBuf.length) break;
+
+                // APP1 Marker (FF E1) contains EXIF/GPS metadata
+                if (marker === 0xE1) {
+                    modified = true;
+                } else {
+                    cleanedSegments.push(fileBuf.subarray(offset, nextOffset));
+                }
+
+                offset = nextOffset;
+            }
+
+            if (modified) {
+                const cleanedBuffer = Buffer.concat(cleanedSegments);
+                fs.writeFileSync(filePath, cleanedBuffer);
+            }
+        }
+    } catch (err) {
+        // Non-blocking fallback
+    }
+}
+
 function validateImageMagicBytes(req, res, next) {
     const filesToValidate = [];
     if (req.file) filesToValidate.push(req.file);
@@ -84,11 +131,13 @@ function validateImageMagicBytes(req, res, next) {
             } catch (unlinkErr) {}
             return res.status(400).json({ error: "Invalid file content: Magic byte validation failed" });
         }
+        sanitizeExifMetadata(file.path);
     }
     next();
 }
 
 upload.validateMagicBytes = validateMagicBytes;
 upload.validateImageMagicBytes = validateImageMagicBytes;
+upload.sanitizeExifMetadata = sanitizeExifMetadata;
 
 module.exports = upload;
