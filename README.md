@@ -338,6 +338,12 @@ Upgraded the legacy grey shimmer `.skeleton` styling to an authentic "Flowing Gl
 - **Root Directory Cleanup:** Relocated `export_logos.js` from root into [`scratch/export_logos.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/export_logos.js) and updated relative paths (`../exports`, `../frontend/public`), leaving `server.js` as the single `.js` file at repository root.
 - **Git Ignore Granular Rules (Option A):** Updated [`.gitignore`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/.gitignore) to selectively ignore output artifacts (`scratch/*.log`, `scratch/*_output.txt`, `scratch/*.tmp`, `scratch/*.txt`, `scratch/*.zip`) while tracking all essential verification scripts (`test_2fa.js`, `test_hardening.js`, `test_email_verify_fix.js`, `test_forgot_password.js`, `grep_db.js`, `benchmark_queries.js`, `test_performance.js`, etc.) for future automated re-runs.
 
+### 32. Credential Hardening & Fail-Fast Protection (August 3, 2026)
+- **Live Password Rotation:** Executed `ALTER USER Glaze IDENTIFIED BY "<new_secure_password>"` on live Oracle Database 21c XE instance, revoking leaked fallback credentials.
+- **Fail-Fast Environment Validation:** Updated [`config/database.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/config/database.js) and [`scratch/migrate_to_oracle.js`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/scratch/migrate_to_oracle.js) to enforce startup checks for required environment variables (`ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_CONNECT_STRING`). Removed all hardcoded fallback secrets.
+- **Zero Hardcoded Secrets Audit:** Confirmed 0 occurrences of hardcoded passwords across the entire codebase via repository-wide `grep`.
+- **Environment Template ([`.env.example`](file:///c:/Users/user/Desktop/ReadingTokenbotschat/complete-facebook-clone/.env.example)):** Created a clean environment variable template for deployment and onboarding without sensitive values.
+
 ---
 
 

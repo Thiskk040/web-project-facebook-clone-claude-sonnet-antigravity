@@ -11,10 +11,17 @@ oracledb.fetchAsString = [oracledb.CLOB];
 const sqliteDbPath = path.join(__dirname, '..', 'facebook.db');
 const sqliteDb = new sqlite3.Database(sqliteDbPath);
 
+const requiredEnvVars = ['ORACLE_USER', 'ORACLE_PASSWORD', 'ORACLE_CONNECT_STRING'];
+const missingEnvVars = requiredEnvVars.filter(key => !process.env[key]);
+if (missingEnvVars.length > 0) {
+    console.error(`FATAL: Missing required Oracle env vars: ${missingEnvVars.join(', ')}`);
+    process.exit(1);
+}
+
 const oracleConfig = {
-    user: process.env.ORACLE_USER || 'Glaze',
-    password: process.env.ORACLE_PASSWORD || 'Gl@ze123',
-    connectString: process.env.ORACLE_CONNECT_STRING || 'localhost:1521/XEPDB1'
+    user: process.env.ORACLE_USER,
+    password: process.env.ORACLE_PASSWORD,
+    connectString: process.env.ORACLE_CONNECT_STRING
 };
 
 async function querySqlite(sql, params = []) {

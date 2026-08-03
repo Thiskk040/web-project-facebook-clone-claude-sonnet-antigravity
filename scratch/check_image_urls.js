@@ -7,9 +7,9 @@ async function checkUrls() {
     let connection;
     try {
         connection = await oracledb.getConnection({
-            user: process.env.ORACLE_USER || 'Glaze',
-            password: process.env.ORACLE_PASSWORD || 'Gl@ze123',
-            connectString: process.env.ORACLE_CONNECT_STRING || 'localhost:1521/XEPDB1'
+            user: process.env.ORACLE_USER,
+            password: process.env.ORACLE_PASSWORD,
+            connectString: process.env.ORACLE_CONNECT_STRING
         });
 
         console.log("--- Sample Users Image Paths in Oracle DB ---");

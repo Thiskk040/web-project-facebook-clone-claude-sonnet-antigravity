@@ -6,6 +6,13 @@ oracledb.autoCommit = true;
 oracledb.fetchAsString = [oracledb.CLOB];
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
+const requiredEnvVars = ['ORACLE_USER', 'ORACLE_PASSWORD', 'ORACLE_CONNECT_STRING'];
+const missingEnvVars = requiredEnvVars.filter(key => !process.env[key]);
+if (missingEnvVars.length > 0) {
+    console.error(`FATAL: Missing required Oracle env vars: ${missingEnvVars.join(', ')}`);
+    process.exit(1);
+}
+
 let pool;
 let poolPromise;
 
@@ -13,9 +20,9 @@ async function getPool() {
     if (pool) return pool;
     if (!poolPromise) {
         poolPromise = oracledb.createPool({
-            user: process.env.ORACLE_USER || 'Glaze',
-            password: process.env.ORACLE_PASSWORD || 'Gl@ze123',
-            connectString: process.env.ORACLE_CONNECT_STRING || 'localhost:1521/XEPDB1',
+            user: process.env.ORACLE_USER,
+            password: process.env.ORACLE_PASSWORD,
+            connectString: process.env.ORACLE_CONNECT_STRING,
             poolMin: parseInt(process.env.ORACLE_POOL_MIN || '2', 10),
             poolMax: parseInt(process.env.ORACLE_POOL_MAX || '10', 10),
             poolIncrement: 1

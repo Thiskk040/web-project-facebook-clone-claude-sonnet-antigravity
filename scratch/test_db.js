@@ -7,8 +7,8 @@ async function testConnection(connectString) {
     console.log(`\nTrying connectString: ${connectString}`);
     try {
         const conn = await oracledb.getConnection({
-            user: process.env.ORACLE_USER || 'Glaze',
-            password: process.env.ORACLE_PASSWORD || 'Gl@ze123',
+            user: process.env.ORACLE_USER,
+            password: process.env.ORACLE_PASSWORD,
             connectString: connectString
         });
         console.log(`SUCCESS connected to ${connectString}!`);

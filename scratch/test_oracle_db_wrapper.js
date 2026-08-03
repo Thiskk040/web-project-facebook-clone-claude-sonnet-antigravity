@@ -11,9 +11,9 @@ let pool;
 async function initPool() {
     if (!pool) {
         pool = await oracledb.createPool({
-            user: process.env.ORACLE_USER || 'Glaze',
-            password: process.env.ORACLE_PASSWORD || 'Gl@ze123',
-            connectString: process.env.ORACLE_CONNECT_STRING || 'localhost:1521/XEPDB1',
+            user: process.env.ORACLE_USER,
+            password: process.env.ORACLE_PASSWORD,
+            connectString: process.env.ORACLE_CONNECT_STRING,
             poolMin: 2,
             poolMax: 10,
             poolIncrement: 1
